@@ -4,7 +4,7 @@ import java.time.{Clock, Instant, ZoneId}
 
 import org.scalatest.{FunSpec, Matchers}
 
-class LWWElementSetSpec extends FunSpec with Matchers {
+class LWWElementSetSpec extends FunSpec with Matchers with TimeMeasurementHelper {
 
   /*
    * TODO: property base check ?
@@ -85,5 +85,18 @@ class LWWElementSetSpec extends FunSpec with Matchers {
       }
     }
 
+    describe("performance") {
+      it("add 1,000,000 elements and then lookup") {
+        val createdSet = time {
+          (1 to 1_000_000_0).foldLeft(new LWWElementSet()) {
+            case (lwwSet, ele) => lwwSet.add(ele)
+          }
+        }
+        val result = time{
+          createdSet.lookup(-1)
+        }
+        result should be (false)
+      }
+    }
   }
 }

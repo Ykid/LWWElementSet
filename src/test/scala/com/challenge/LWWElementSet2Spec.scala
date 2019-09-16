@@ -4,12 +4,8 @@ import java.time.{Clock, Instant, ZoneId}
 
 import org.scalatest.{FunSpec, Matchers}
 
-class LWWElementSet2Spec extends FunSpec with Matchers {
+class LWWElementSet2Spec extends FunSpec with Matchers with TimeMeasurementHelper {
 
-
-  /*
-   * TODO: property base check ?
-   */
   describe("A LWWElementSet") {
     describe("query functionality") {
       it("should report true if the element in question in the set") {
@@ -83,6 +79,20 @@ class LWWElementSet2Spec extends FunSpec with Matchers {
         val mockClock = Clock.fixed(Instant.now(), ZoneId.of(ZoneId.SHORT_IDS.get("CTT")))
         val set = LWWElementSet2()(mockClock)
         set.add(1).remove(1).toSet should ===(Set())
+      }
+    }
+
+    describe("performance") {
+      it("add 1,000,000 elements and then lookup") {
+        val createdSet = time {
+          (1 to 1_000_000_0).foldLeft(LWWElementSet2()()) {
+            case (lwwSet, ele) => lwwSet.add(ele)
+          }
+        }
+        val result = time {
+          createdSet.lookup(-1)
+        }
+        result should be(false)
       }
     }
 
