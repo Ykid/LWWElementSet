@@ -8,6 +8,18 @@ class LWWElementSetSpec extends FunSpec with Matchers {
    * TODO: property base check ?
    */
   describe("A LWWElementSet") {
+    describe("query functionality") {
+      it("should report true if the element in question in the set") {
+        val set = new LWWElementSet()
+        set.add(1).lookup(1) should be (true)
+      }
+
+      it("should report false if the element in question in the set") {
+        val set = new LWWElementSet()
+        set.lookup(1) should be (false)
+      }
+    }
+
     describe("basic add functionality") {
       it("should be able to add one element when empty") {
         val set = new LWWElementSet()
@@ -21,7 +33,7 @@ class LWWElementSetSpec extends FunSpec with Matchers {
 
       it("should be able to add different elements") {
         val set = new LWWElementSet()
-        set.add(1).add(2).add(3).result() should ===(Set(1,2,3))
+        set.add(1).add(2).add(3).result() should ===(Set(1, 2, 3))
       }
     }
 
@@ -41,7 +53,7 @@ class LWWElementSetSpec extends FunSpec with Matchers {
       it("case one: different elements will appear in the merge set") {
         val set1 = new LWWElementSet().add(1)
         val set2 = new LWWElementSet().add(2)
-        set1.merge(set2).result() should ===(Set(1,2))
+        set1.merge(set2).result() should ===(Set(1, 2))
       }
 
       it("case two: same elements will not be duplicated") {
