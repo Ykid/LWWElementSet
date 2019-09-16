@@ -1,5 +1,7 @@
 package com.challenge
 
+import java.time.{Clock, Instant, ZoneId}
+
 import org.scalatest.{FunSpec, Matchers}
 
 class LWWElementSetSpec extends FunSpec with Matchers {
@@ -75,6 +77,13 @@ class LWWElementSetSpec extends FunSpec with Matchers {
         val set2 = new LWWElementSet().add(1)
         set1.merge(set2).result() should ===(Set(1))
       }
+
+      it("case five: if the latest add transaction has the same timestamp as the latest remove transaction, the element is treated as removed") {
+        val mockClock = Clock.fixed(Instant.now(), ZoneId.of(ZoneId.SHORT_IDS.get("CTT")))
+        val set = new LWWElementSet(new GSet(clock = mockClock), new GSet(clock = mockClock))
+        set.add(1).remove(1).result() should === (Set())
+      }
     }
+
   }
 }

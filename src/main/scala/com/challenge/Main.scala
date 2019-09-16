@@ -1,6 +1,6 @@
 package com.challenge
 
-import java.time.Instant
+import java.time.{Clock, Instant, ZoneId}
 
 object Main extends App {
   val lwwSet = new LWWElementSet()
@@ -51,7 +51,7 @@ class LWWElementSet(private val addSet: GSet = new GSet(), private val removeSet
     addSet.getLatest(elem) match {
       case Some((_, ts)) => //the element exists
         removeSet.getLatest(elem) match {
-          //add bias: if the timestamps are equal, it is treated as added
+          //bias towards removal: if the timestamps are equal, it is treated as removed
           case Some((_, ts2)) => ts2.compareTo(ts) < 0
           case None => true
         }
@@ -82,7 +82,8 @@ class LWWElementSet(private val addSet: GSet = new GSet(), private val removeSet
 
 }
 
-class GSet(copy: Set[(Int, Instant)] = Set()) {
+//this might not be in the most strict sense a Gset because the same element of different timestamps are treated as different in this set
+class GSet(copy: Set[(Int, Instant)] = Set(), clock: Clock = Clock.systemUTC()) {
   val internalSet: Set[(Int, Instant)] = copy
 
   //prevent duplicate add ?
@@ -91,7 +92,7 @@ class GSet(copy: Set[(Int, Instant)] = Set()) {
     /* what if the same element has been added again and again ? But it is a set, not a list, there should be no effect
     *  if the elements are added repeatedly
     * */
-    val tp = (elem, Instant.now())
+    val tp = (elem, clock.instant())
     new GSet(internalSet + tp)
   }
 
