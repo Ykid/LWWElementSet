@@ -96,5 +96,30 @@ class LWWElementSet2Spec extends FunSpec with Matchers with TimeMeasurementHelpe
       }
     }
 
+    describe("merge properties") {
+      it ("should be idempotent") {
+        val set1 = LWWElementSet2()().add(1)
+        set1.merge(set1).toSet should === (set1.toSet)
+
+        val set2 = LWWElementSet2()().add(1).remove(1)
+        set2.merge(set2).toSet should === (set2.toSet)
+      }
+
+      it ("should be commutative") {
+        val set1 = LWWElementSet2()().add(1).remove(1)
+        val set2 = LWWElementSet2()().add(2).remove(2).add(3).add(1)
+        set1.merge(set2).toSet should === (set2.merge(set1).toSet)
+      }
+
+      it ("should be associative") {
+        val set1 = LWWElementSet2()().add(1).remove(1)
+        Thread.sleep(5)
+        val set2 = LWWElementSet2()().add(2).remove(2).add(3).add(1)
+        Thread.sleep(5)
+        val set3 = LWWElementSet2()().add(4).remove(4).add(1).add(3).remove(3)
+        set1.merge(set2).merge(set3).toSet should === (set1.merge(set2.merge(set3)).toSet)
+      }
+    }
+
   }
 }

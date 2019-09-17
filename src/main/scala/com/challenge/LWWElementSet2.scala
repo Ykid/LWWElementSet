@@ -23,6 +23,7 @@ case class LWWElementSet2(addSet: GSet2 = GSet2(), removeSet: GSet2 = GSet2())(c
 
   //toSet: O(#elements in addSet) time
 
+  //no need to throw exceptions if the element is not in the set
   def remove(ele: Int): LWWElementSet2 = {
     if (lookup(ele)) {
       copy(removeSet = removeSet.add(ele, clock.instant()))(clock)
