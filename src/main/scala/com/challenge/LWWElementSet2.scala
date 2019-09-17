@@ -2,11 +2,11 @@ package com.challenge
 
 import java.time.{Clock, Instant}
 
-import com.challenge.LWWElementSet2.GSet2
+import com.challenge.LWWElementSet2.LWWRegistrySet
 
 import scala.collection.immutable.HashMap
 
-case class LWWElementSet2(addSet: GSet2 = GSet2(), removeSet: GSet2 = GSet2())(clock: Clock = Clock.systemUTC()) {
+case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: LWWRegistrySet = LWWRegistrySet())(clock: Clock = Clock.systemUTC()) {
 
   //objective: add an efficient implementation of LWW Set
   //remove: amortized O(1) time
@@ -47,7 +47,7 @@ case class LWWElementSet2(addSet: GSet2 = GSet2(), removeSet: GSet2 = GSet2())(c
   def merge(other: LWWElementSet2): LWWElementSet2 = copy(addSet.merge(other.addSet), removeSet.merge(other.removeSet))(clock)
 
   def toSet: Set[Int] = addSet.entries.foldLeft(List[Int]()) {
-    case (acc, (ele, latestAddTs :: _)) => {
+    case (acc, (ele, latestAddTs)) => {
       removeSet.latestTimestampBy(ele) match {
         case Some(latestRemoveTs) if latestAddTs.compareTo(latestRemoveTs) > 0 => ele :: acc
         case Some(_) => acc
@@ -58,29 +58,25 @@ case class LWWElementSet2(addSet: GSet2 = GSet2(), removeSet: GSet2 = GSet2())(c
 }
 
 object LWWElementSet2 {
+
   type Element = Int
 
-  case class Entry(element: Element, timestamp: Instant)
-
-  case class GSet2(entries: HashMap[Element, List[Instant]] = HashMap()) {
-    def merge(that: GSet2): GSet2 = {
+  case class LWWRegistrySet(entries: HashMap[Element, Instant] = HashMap()) {
+    def merge(that: LWWRegistrySet): LWWRegistrySet = {
       val updated = entries.merged(that.entries) {
-        //elements are equal, so ignores the other
-        case ((element, thisTimestamps@thisLastUpdated :: _), (_, thatTimeStamps@thatLastUpdated :: _)) => {
-          if (thisLastUpdated.compareTo(thatLastUpdated) <= 0) {
-            (element, thatTimeStamps.concat(thisTimestamps))
-          } else {
-            (element, thisTimestamps.concat(thatTimeStamps))
-          }
+        case ((element, thisLastUpdated), (_, thatLastUpdated)) => {
+          (element, latest(thisLastUpdated, thatLastUpdated))
         }
       }
       copy(entries = updated)
     }
 
-    def add(element: Element, timestamp: Instant): GSet2 = {
+    private def latest(ts1: Instant, ts2: Instant): Instant = if (ts1.compareTo(ts2) <= 0) ts2 else ts1
+
+    def add(element: Element, timestamp: Instant): LWWRegistrySet = {
       val updated = entries.updatedWith(element) {
-        case Some(timestamps) => Some(timestamp :: timestamps)
-        case None => Some(List(timestamp))
+        case Some(existing) => Some(latest(existing, timestamp))
+        case None => Some(timestamp)
       }
       copy(entries = updated)
     }
@@ -88,10 +84,7 @@ object LWWElementSet2 {
     def lookup(element: Element): Boolean = entries.contains(element)
 
     //if the element does not exist, returns none, otherwise returns the latest timestamp
-    def latestTimestampBy(element: Element): Option[Instant] = entries.get(element) match {
-      case Some(head :: _) => Some(head)
-      case _ => None
-    }
+    def latestTimestampBy(element: Element): Option[Instant] = entries.get(element)
   }
 
 }
