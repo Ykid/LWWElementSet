@@ -76,6 +76,7 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
           } {
             val (state2, _) = zipped(idx1 + 1)
             state1.compare(state2) shouldBe (true)
+            state2.compare(state1) shouldBe (false)
           }
         }
       }

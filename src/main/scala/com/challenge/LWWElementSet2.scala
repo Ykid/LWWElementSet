@@ -65,6 +65,14 @@ case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: 
       }
     }
   }.toSet
+
+  //don't think too much, treat it as a set
+  //can use merge to define it x <= x.merge(y), y <= y.merge(x), x.merge(y) = y.merge(x)
+
+  def compare(that: LWWElementSet2): Boolean = {
+    addSet.compare(that.addSet) && removeSet.compare(that.removeSet)
+  }
+
 }
 
 object LWWElementSet2 {

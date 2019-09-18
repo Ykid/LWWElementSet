@@ -66,6 +66,21 @@ class PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with
           reference should ===(mine.toSet)
         }
       }
+
+      it("should be monotonic") {
+        forAll { operations: List[(Boolean, Int)] =>
+          operations.foldRight(LWWElementSet2()(new UniqueTimestampClock())) {
+            case ((isAdd, ele), last) =>
+              val updated = if (isAdd) last.add(ele) else last.remove(ele)
+              last.compare(updated) should be(true)
+              //in case the element to be removed is not in the set
+              if (last.lookup(ele)) {
+                updated.compare(last) should be(false)
+              }
+              updated
+          }
+        }
+      }
     }
   }
 
@@ -85,4 +100,5 @@ class PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with
       result
     }
   }
+
 }
