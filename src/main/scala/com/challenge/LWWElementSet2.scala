@@ -16,7 +16,7 @@ class LWWElementSetClokImpl extends LWWElementSetClock {
   override def now(): Instant = clock.instant()
 }
 
-case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: LWWRegistrySet = LWWRegistrySet())(clock: LWWElementSetClock = new LWWElementSetClokImpl() ) {
+case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: LWWRegistrySet = LWWRegistrySet())(clock: LWWElementSetClock = new LWWElementSetClokImpl()) {
 
   //objective: add an efficient implementation of LWW Set
   //remove: amortized O(1) time
@@ -71,6 +71,14 @@ object LWWElementSet2 {
 
   type Element = Int
 
+  class InstantOrdering extends Ordering[Instant] {
+    override def compare(x: Instant, y: Instant): Element = x.compareTo(y)
+  }
+
+  implicit val instantOrdering = new InstantOrdering
+
+  //we could use a GSet, but for efficiency reasons, since non latest timestamps are ineffect redundant,
+  //these timestamps are dropped
   case class LWWRegistrySet(entries: HashMap[Element, Instant] = HashMap()) {
     def merge(that: LWWRegistrySet): LWWRegistrySet = {
       val updated = entries.merged(that.entries) {
@@ -95,6 +103,37 @@ object LWWElementSet2 {
 
     //if the element does not exist, returns none, otherwise returns the latest timestamp
     def latestTimestampBy(element: Element): Option[Instant] = entries.get(element)
+
+    //true: this set in related to that set of Relation R, false otherwise
+    def compare(that: LWWRegistrySet): Boolean = {
+      /*
+       * denote the elements of this class as elem(A), elem(A) = keys(entries)
+       * denote the associated timestamp of element e in this set A as ts(e, A)
+       * denote the max timestamp of this class is maxTs(A)
+       * (1) elem(this) is a subset of elem(that)
+       * (2) for all e in (intersection of elem(this) and elem(that)), ts(e, this) <= ts(e, that)
+       * (3) for all e in (set difference: elem(this) - elem(that)), ts(e, that) >= maxTs(this) given `this` set is nonEmpty
+       *
+       * returns true if (1), (2) and (3) are met and false otherwise
+       */
+      val thisElems = entries.keySet
+      val thatElems = that.entries.keySet
+      val cond1 = thisElems.subsetOf(thatElems)
+
+      lazy val cond2 = thisElems.intersect(thatElems).forall { commonElem =>
+        (entries(commonElem) compareTo that.entries(commonElem)) <= 0
+      }
+
+      lazy val cond3 = if (entries.nonEmpty) {
+        lazy val maxTs = entries.values.max(instantOrdering)
+        thatElems.diff(thisElems).forall { distinctElem =>
+          that.entries(distinctElem).compareTo(maxTs) >= 0
+        }
+      } else {
+        true
+      }
+      cond1 && cond2 && cond3
+    }
   }
 
 }
