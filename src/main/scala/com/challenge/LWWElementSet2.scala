@@ -79,29 +79,26 @@ object LWWElementSet2 {
 
   type Element = Int
 
+  private def max(ts1: Instant, ts2: Instant): Instant = if (ts1.compareTo(ts2) <= 0) ts2 else ts1
+
   //we could use a GSet, but for efficiency reasons, since non latest timestamps are ineffect redundant,
   //these timestamps are dropped
   case class LWWRegistrySet(entries: HashMap[Element, Instant] = HashMap()) {
     def merge(that: LWWRegistrySet): LWWRegistrySet = {
       val updated = entries.merged(that.entries) {
-        case ((element, thisLastUpdated), (_, thatLastUpdated)) => {
-          (element, latest(thisLastUpdated, thatLastUpdated))
-        }
+        case ((element, thisLastUpdated), (_, thatLastUpdated)) =>
+          (element, max(thisLastUpdated, thatLastUpdated))
       }
       copy(entries = updated)
     }
 
-    private def latest(ts1: Instant, ts2: Instant): Instant = if (ts1.compareTo(ts2) <= 0) ts2 else ts1
-
     def add(element: Element, timestamp: Instant): LWWRegistrySet = {
       val updated = entries.updatedWith(element) {
-        case Some(existing) => Some(latest(existing, timestamp))
+        case Some(existing) => Some(max(existing, timestamp))
         case None => Some(timestamp)
       }
       copy(entries = updated)
     }
-
-    def lookup(element: Element): Boolean = entries.contains(element)
 
     //if the element does not exist, returns none, otherwise returns the latest timestamp
     def latestTimestampBy(element: Element): Option[Instant] = entries.get(element)
@@ -114,9 +111,8 @@ object LWWElementSet2 {
        * denote the max timestamp of this class is maxTs(A)
        * (1) elem(this) is a subset of elem(that)
        * (2) for all e in (intersection of elem(this) and elem(that)), ts(e, this) <= ts(e, that)
-       * (3) for all e in (set difference: elem(this) - elem(that)), ts(e, that) >= maxTs(this) given `this` set is nonEmpty
        *
-       * returns true if (1), (2) and (3) are met and false otherwise
+       * returns true if (1) and (2) are met and false otherwise
        */
       val thisElems = entries.keySet
       val thatElems = that.entries.keySet
@@ -125,16 +121,7 @@ object LWWElementSet2 {
       lazy val cond2 = thisElems.intersect(thatElems).forall { commonElem =>
         (entries(commonElem) compareTo that.entries(commonElem)) <= 0
       }
-
-      lazy val cond3 = if (entries.nonEmpty) {
-        lazy val maxTs = entries.values.max
-        thatElems.diff(thisElems).forall { distinctElem =>
-          that.entries(distinctElem).compareTo(maxTs) >= 0
-        }
-      } else {
-        true
-      }
-      cond1 && cond2 && cond3
+      cond1 && cond2
     }
   }
 

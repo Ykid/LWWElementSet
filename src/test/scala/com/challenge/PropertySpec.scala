@@ -32,6 +32,16 @@ class PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with
           s1.merge(s2) should ===(s2.merge(s1))
         }
       }
+
+      it("should be a least upper bound operation") {
+        forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)]) =>
+          val s1 = createSetFromList(l1)
+          val s2 = createSetFromList(l2)
+          val merged = s1.merge(s2)
+          s1.compare(merged) should be (true)
+          s2.compare(merged) should be (true)
+        }
+      }
     }
 
     //use unique timestamp clock to make sure time stamp agrees with causal order
