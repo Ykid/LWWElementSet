@@ -7,17 +7,6 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with ScalaCheckPropertyChecks {
 
-  //not thread safe, only appropriate for single thread testing
-  class UniqueTimestampClock extends LWWElementSetClock {
-    var counter: Long = 1
-
-    override def now(): Instant = {
-      val result = Instant.ofEpochMilli(counter)
-      counter = counter + 1
-      result
-    }
-  }
-
   describe("foo") {
     describe("merge") {
       it("associativity") {
@@ -45,6 +34,7 @@ class PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with
       }
     }
 
+    //use unique timestamp clock to make sure time stamp agrees with causal order
     describe("add and remove") {
       it("agree with a set if add and remove the same element randomly") {
         val ele = 1
@@ -82,6 +72,17 @@ class PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with
   def createSetFromList(l: List[(Boolean, Int)]): LWWElementSet2 = {
     l.foldLeft(LWWElementSet2()()) {
       case (set, (shouldAdd, ele)) => if (shouldAdd) set.add(ele) else set.remove(ele)
+    }
+  }
+
+  //not thread safe, only appropriate for single thread testing
+  class UniqueTimestampClock extends LWWElementSetClock {
+    var counter: Long = 1
+
+    override def now(): Instant = {
+      val result = Instant.ofEpochMilli(counter)
+      counter = counter + 1
+      result
     }
   }
 }
