@@ -71,12 +71,6 @@ object LWWElementSet2 {
 
   type Element = Int
 
-  class InstantOrdering extends Ordering[Instant] {
-    override def compare(x: Instant, y: Instant): Element = x.compareTo(y)
-  }
-
-  implicit val instantOrdering = new InstantOrdering
-
   //we could use a GSet, but for efficiency reasons, since non latest timestamps are ineffect redundant,
   //these timestamps are dropped
   case class LWWRegistrySet(entries: HashMap[Element, Instant] = HashMap()) {
@@ -125,7 +119,7 @@ object LWWElementSet2 {
       }
 
       lazy val cond3 = if (entries.nonEmpty) {
-        lazy val maxTs = entries.values.max(instantOrdering)
+        lazy val maxTs = entries.values.max
         thatElems.diff(thisElems).forall { distinctElem =>
           that.entries(distinctElem).compareTo(maxTs) >= 0
         }
