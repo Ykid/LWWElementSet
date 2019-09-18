@@ -79,6 +79,13 @@ case class LWWElementSet2[E](addSet: LWWRegistrySet[E] = LWWRegistrySet[E](), re
 
 object LWWElementSet2 {
 
+  def empty[E](clock: LWWElementSetClock = new LWWElementSetClokImpl()): LWWElementSet2[E] = LWWElementSet2()(clock)
+
+  def from[E](es: Seq[E], clock: LWWElementSetClock = new LWWElementSetClokImpl()): LWWElementSet2[E] = {
+    es.foldRight(empty[E](clock)) {
+      case (ele, accumulate) => accumulate.add(ele)
+    }
+  }
 
   private def max(ts1: Instant, ts2: Instant): Instant = if (ts1.compareTo(ts2) <= 0) ts2 else ts1
 

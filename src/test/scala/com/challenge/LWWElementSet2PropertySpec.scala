@@ -4,6 +4,7 @@ import java.time.Instant
 
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import LWWElementSet2.{empty => emptySet}
 
 class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with ScalaCheckPropertyChecks {
 
@@ -20,7 +21,7 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurem
       it("should be anti-symmetric") {
         //TODO: maybe write a better generator ?
         forAll { elems: List[(Boolean, Int)] =>
-          val allStates = elems.scanLeft(LWWElementSet2[Int]()(new UniqueTimestampClock())) {
+          val allStates = elems.scanLeft(emptySet[Int](new UniqueTimestampClock())) {
             case (accumulated, (isAdd, elem)) =>
               if (isAdd) accumulated.add(elem)
               else accumulated.remove(elem)
@@ -40,7 +41,7 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurem
 
       it("should be transitive") {
         forAll { elems: List[(Boolean, Int)] =>
-          val allStates = elems.scanLeft(LWWElementSet2[Int]()(new UniqueTimestampClock())) {
+          val allStates = elems.scanLeft(emptySet[Int](new UniqueTimestampClock())) {
             case (accumulated, (isAdd, elem)) =>
               if (isAdd) accumulated.add(elem)
               else accumulated.remove(elem)
@@ -100,7 +101,7 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurem
       it("agree with a set if add and remove the same element randomly") {
         val ele = 1
         forAll { operations: List[Boolean] =>
-          val (reference, mine) = operations.foldRight((Set[Int](), LWWElementSet2[Int]()(new UniqueTimestampClock()))) {
+          val (reference, mine) = operations.foldRight((Set[Int](), emptySet[Int](new UniqueTimestampClock()))) {
             case (isAdd, (referenceImpl, myImpl)) => {
               if (isAdd) {
                 (referenceImpl + ele, myImpl.add(ele))
@@ -115,7 +116,7 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurem
 
       it("agree with a set if add and remove (possibly) different element randomly") {
         forAll { operations: List[(Boolean, Int)] =>
-          val (reference, mine) = operations.foldRight((Set[Int](), LWWElementSet2[Int]()(new UniqueTimestampClock()))) {
+          val (reference, mine) = operations.foldRight((Set[Int](), emptySet[Int](new UniqueTimestampClock()))) {
             case ((isAdd, ele), (referenceImpl, myImpl)) => {
               if (isAdd) {
                 (referenceImpl + ele, myImpl.add(ele))
@@ -130,7 +131,7 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurem
 
       it("should be monotonic") {
         forAll { operations: List[(Boolean, Int)] =>
-          operations.foldRight(LWWElementSet2[Int]()(new UniqueTimestampClock())) {
+          operations.foldRight(emptySet[Int](new UniqueTimestampClock())) {
             case ((isAdd, ele), last) =>
               val updated = if (isAdd) last.add(ele) else last.remove(ele)
               last.compare(updated) should be(true)
@@ -146,7 +147,7 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurem
   }
 
   private def createSetFromList(l: List[(Boolean, Int)]): LWWElementSet2[Int] = {
-    l.foldLeft(LWWElementSet2[Int]()()) {
+    l.foldLeft(emptySet[Int]()) {
       case (set, (shouldAdd, ele)) => if (shouldAdd) set.add(ele) else set.remove(ele)
     }
   }
