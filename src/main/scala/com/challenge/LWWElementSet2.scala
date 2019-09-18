@@ -18,7 +18,7 @@ class LWWElementSetClokImpl extends LWWElementSetClock {
 
 //an element of type E put into this set be immutable
 //it should also implement a good hashcode function to increase performance
-case class LWWElementSet2[E](addSet: LWWRegistrySet[E] = LWWRegistrySet[E](), removeSet: LWWRegistrySet[E] = LWWRegistrySet[E]())(clock: LWWElementSetClock = new LWWElementSetClokImpl()) {
+case class LWWElementSet2[E](addSet: LWWRegistrySet[E], removeSet: LWWRegistrySet[E])(clock: LWWElementSetClock) {
 
   //objective: add an efficient implementation of LWW Set
   //remove: amortized O(1) time
@@ -79,7 +79,7 @@ case class LWWElementSet2[E](addSet: LWWRegistrySet[E] = LWWRegistrySet[E](), re
 
 object LWWElementSet2 {
 
-  def empty[E](clock: LWWElementSetClock = new LWWElementSetClokImpl()): LWWElementSet2[E] = LWWElementSet2()(clock)
+  def empty[E](clock: LWWElementSetClock = new LWWElementSetClokImpl()): LWWElementSet2[E] = LWWElementSet2(LWWRegistrySet[E](), LWWRegistrySet[E]())(clock)
 
   def from[E](es: Seq[E], clock: LWWElementSetClock = new LWWElementSetClokImpl()): LWWElementSet2[E] = {
     es.foldRight(empty[E](clock)) {
