@@ -38,7 +38,7 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
           } {
             state1.compare(state2) shouldBe (true)
             if (state2.compare(state1)) {
-              state1 should === (state2)
+              state1 should ===(state2)
             }
           }
         }
@@ -61,7 +61,24 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
           }
         }
       }
+    }
 
+    //TODO: actually this is already covered in the above test cases
+    describe("update operation") {
+      it("should be monotonic") {
+        forAll { elems: List[Int] =>
+          val allStates = elems.zipWithIndex.scanLeft(LWWRegistrySet()) {
+            case (accumulated, (elem, i)) => accumulated.add(elem, intToTs(i))
+          }
+          val zipped = allStates.zipWithIndex
+          for {
+            (state1, idx1) <- zipped if idx1 < (zipped.length - 1)
+          } {
+            val (state2, _) = zipped(idx1 + 1)
+            state1.compare(state2) shouldBe (true)
+          }
+        }
+      }
     }
   }
 
