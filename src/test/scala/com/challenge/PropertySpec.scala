@@ -5,7 +5,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with ScalaCheckPropertyChecks {
   describe("foo") {
-    describe("ha") {
+    describe("merge") {
       it("associativity") {
         forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)], l3: List[(Boolean, Int)]) =>
           val s1 = createSetFromList(l1)
@@ -22,11 +22,42 @@ class PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with
         }
       }
 
-      it("commutativity") {
+      it("commutativity")  {
         forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)]) =>
           val s1 = createSetFromList(l1)
           val s2 = createSetFromList(l2)
           s1.merge(s2) should ===(s2.merge(s1))
+        }
+      }
+    }
+
+    describe("add and remove"){
+      it("agree with a set if add and remove the same element randomly") {
+        val ele = 1
+        forAll{operations: List[Boolean] =>
+          operations.foldRight((Set[Int](), LWWElementSet2()())) {
+            case (isAdd, (referenceImpl, myImpl)) => {
+              if (isAdd) {
+                (referenceImpl + ele, myImpl.add(ele))
+              } else {
+                (referenceImpl - ele, myImpl.remove(ele))
+              }
+            }
+          }
+        }
+      }
+
+      it("agree with a set if add and remove (possibly) different element randomly") {
+        forAll{operations: List[(Boolean, Int)] =>
+          operations.foldRight((Set[Int](), LWWElementSet2()())) {
+            case ((isAdd, ele), (referenceImpl, myImpl)) => {
+              if (isAdd) {
+                (referenceImpl + ele, myImpl.add(ele))
+              } else {
+                (referenceImpl - ele, myImpl.remove(ele))
+              }
+            }
+          }
         }
       }
     }
