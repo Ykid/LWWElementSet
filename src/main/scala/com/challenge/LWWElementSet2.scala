@@ -16,7 +16,9 @@ class LWWElementSetClokImpl extends LWWElementSetClock {
   override def now(): Instant = clock.instant()
 }
 
-case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: LWWRegistrySet = LWWRegistrySet())(clock: LWWElementSetClock = new LWWElementSetClokImpl()) {
+//an element of type E put into this set be immutable
+//it should also implement a good hashcode function to increase performance
+case class LWWElementSet2[E](addSet: LWWRegistrySet[E] = LWWRegistrySet[E](), removeSet: LWWRegistrySet[E] = LWWRegistrySet[E]())(clock: LWWElementSetClock = new LWWElementSetClokImpl()) {
 
   //objective: add an efficient implementation of LWW Set
   //remove: amortized O(1) time
@@ -34,7 +36,7 @@ case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: 
   //toSet: O(#elements in addSet) time
 
   //no need to throw exceptions if the element is not in the set
-  def remove(ele: Int): LWWElementSet2 = {
+  def remove(ele: E): LWWElementSet2[E] = {
     if (lookup(ele)) {
       copy(removeSet = removeSet.add(ele, clock.now()))(clock)
     } else {
@@ -42,9 +44,9 @@ case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: 
     }
   }
 
-  def add(ele: Int): LWWElementSet2 = copy(addSet = addSet.add(ele, clock.now()))(clock)
+  def add(ele: E): LWWElementSet2[E] = copy(addSet = addSet.add(ele, clock.now()))(clock)
 
-  def lookup(ele: Int): Boolean = {
+  def lookup(ele: E): Boolean = {
     addSet.latestTimestampBy(ele)
       .exists { addTs =>
         removeSet.latestTimestampBy(ele) match {
@@ -54,9 +56,9 @@ case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: 
       }
   }
 
-  def merge(other: LWWElementSet2): LWWElementSet2 = copy(addSet.merge(other.addSet), removeSet.merge(other.removeSet))(clock)
+  def merge(other: LWWElementSet2[E]): LWWElementSet2[E] = copy(addSet.merge(other.addSet), removeSet.merge(other.removeSet))(clock)
 
-  def toSet: Set[Int] = addSet.entries.foldLeft(List[Int]()) {
+  def toSet: Set[E] = addSet.entries.foldLeft(List[E]()) {
     case (acc, (ele, latestAddTs)) => {
       removeSet.latestTimestampBy(ele) match {
         case Some(latestRemoveTs) if latestAddTs.compareTo(latestRemoveTs) > 0 => ele :: acc
@@ -69,7 +71,7 @@ case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: 
   //don't think too much, treat it as a set
   //can use merge to define it x <= x.merge(y), y <= y.merge(x), x.merge(y) = y.merge(x)
 
-  def compare(that: LWWElementSet2): Boolean = {
+  def compare(that: LWWElementSet2[E]): Boolean = {
     addSet.compare(that.addSet) && removeSet.compare(that.removeSet)
   }
 
@@ -77,15 +79,14 @@ case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: 
 
 object LWWElementSet2 {
 
-  type Element = Int
 
   private def max(ts1: Instant, ts2: Instant): Instant = if (ts1.compareTo(ts2) <= 0) ts2 else ts1
 
-  //we could use a GSet, but for efficiency reasons, since non latest timestamps are ineffect redundant,
+  //we could use a GSet, but for efficiency reasons, since non latest timestamps are in effect redundant,
   //these timestamps are dropped
   //TODO: maybe change it to TimestampGSet
-  case class LWWRegistrySet(entries: HashMap[Element, Instant] = HashMap()) {
-    def merge(that: LWWRegistrySet): LWWRegistrySet = {
+  case class LWWRegistrySet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()) {
+    def merge(that: LWWRegistrySet[E]): LWWRegistrySet[E] = {
       val updated = entries.merged(that.entries) {
         case ((element, thisLastUpdated), (_, thatLastUpdated)) =>
           (element, max(thisLastUpdated, thatLastUpdated))
@@ -93,7 +94,7 @@ object LWWElementSet2 {
       copy(entries = updated)
     }
 
-    def add(element: Element, timestamp: Instant): LWWRegistrySet = {
+    def add(element: E, timestamp: Instant): LWWRegistrySet[E] = {
       val updated = entries.updatedWith(element) {
         case Some(existing) => Some(max(existing, timestamp))
         case None => Some(timestamp)
@@ -102,10 +103,10 @@ object LWWElementSet2 {
     }
 
     //if the element does not exist, returns none, otherwise returns the latest timestamp
-    def latestTimestampBy(element: Element): Option[Instant] = entries.get(element)
+    def latestTimestampBy(element: E): Option[Instant] = entries.get(element)
 
     //true: this set in related to that set of Relation R, false otherwise
-    def compare(that: LWWRegistrySet): Boolean = {
+    def compare(that: LWWRegistrySet[E]): Boolean = {
       /*
        * denote the elements of this class as elem(A), elem(A) = keys(entries)
        * denote the associated timestamp of element e in this set A as ts(e, A)

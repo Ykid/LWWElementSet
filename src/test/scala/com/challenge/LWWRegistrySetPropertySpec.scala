@@ -16,7 +16,7 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
     describe("should satisfy partial order requirement") {
       it("should be reflexive") {
         forAll { elems: List[Int] =>
-          val set = elems.zipWithIndex.foldLeft(LWWRegistrySet()) {
+          val set = elems.zipWithIndex.foldLeft(LWWRegistrySet[Int]()) {
             case (accumulate, (elem, index)) => accumulate.add(elem, toTimestamp(index))
           }
           set.compare(set) should be(true)
@@ -26,7 +26,7 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
       it("should be anti-symmetric") {
         //TODO: maybe write a better generator ?
         forAll { elems: List[Int] =>
-          val allStates = elems.zipWithIndex.scanLeft(LWWRegistrySet()) {
+          val allStates = elems.zipWithIndex.scanLeft(LWWRegistrySet[Int]()) {
             case (accumulated, (elem, i)) => accumulated.add(elem, toTimestamp(i))
           }
           val zipped = allStates.zipWithIndex
@@ -44,7 +44,7 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
 
       it("should be transitive") {
         forAll { elems: List[Int] =>
-          val allStates = elems.zipWithIndex.scanLeft(LWWRegistrySet()) {
+          val allStates = elems.zipWithIndex.scanLeft(LWWRegistrySet[Int]()) {
             case (accumulated, (elem, i)) => accumulated.add(elem, toTimestamp(i))
           }
           val zipped = allStates.zipWithIndex
@@ -65,7 +65,7 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
     describe("update operation") {
       it("should be monotonic") {
         forAll { elems: List[Int] =>
-          val allStates = elems.zipWithIndex.scanLeft(LWWRegistrySet()) {
+          val allStates = elems.zipWithIndex.scanLeft(LWWRegistrySet[Int]()) {
             case (accumulated, (elem, i)) => accumulated.add(elem, toTimestamp(i))
           }
           val zipped = allStates.zipWithIndex
