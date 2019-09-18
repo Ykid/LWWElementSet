@@ -1,10 +1,11 @@
-package com.challenge
+package com.challenge.solution2
 
 import java.time.Instant
 
+import com.challenge.TimeMeasurementHelper
+import com.challenge.solution2.LWWElementSet2.{empty => emptySet}
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import LWWElementSet2.{empty => emptySet}
 
 class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with ScalaCheckPropertyChecks {
 

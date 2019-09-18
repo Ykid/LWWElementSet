@@ -1,8 +1,7 @@
-package com.challenge
+package com.challenge.solution2
 
 import java.time.Instant
 
-import com.challenge.LWWElementSet2.TimestampGSet
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
