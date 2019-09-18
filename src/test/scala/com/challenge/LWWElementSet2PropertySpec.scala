@@ -5,10 +5,61 @@ import java.time.Instant
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with ScalaCheckPropertyChecks {
+class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with ScalaCheckPropertyChecks {
 
-  describe("foo") {
-    describe("merge") {
+  describe("LWWElementSet2") {
+    describe("should satisfy partial order requirement") {
+      it("should be reflexive") {
+        forAll { l1: List[(Boolean, Int)] =>
+          val s1 = createSetFromList(l1)
+          s1.compare(s1) should be (true)
+        }
+      }
+
+      //TODO: don't know how to generate perfect random data such that A <= B
+      it("should be anti-symmetric") {
+        //TODO: maybe write a better generator ?
+        forAll { elems: List[(Boolean, Int)] =>
+          val allStates = elems.scanLeft(LWWElementSet2()(new UniqueTimestampClock())) {
+            case (accumulated, (isAdd, elem)) =>
+              if (isAdd) accumulated.add(elem)
+              else accumulated.remove(elem)
+          }
+          val zipped = allStates.zipWithIndex
+          for {
+            (state1, idx1) <- zipped
+            (state2, idx2) <- zipped if idx1 <= idx2
+          } {
+            state1.compare(state2) shouldBe (true)
+            if (state2.compare(state1)) {
+              state1 should ===(state2)
+            }
+          }
+        }
+      }
+
+      it("should be transitive") {
+        forAll { elems: List[(Boolean, Int)] =>
+          val allStates = elems.scanLeft(LWWElementSet2()(new UniqueTimestampClock())) {
+            case (accumulated, (isAdd, elem)) =>
+              if (isAdd) accumulated.add(elem)
+              else accumulated.remove(elem)
+          }
+          val zipped = allStates.zipWithIndex
+          for {
+            (state1, idx1) <- zipped
+            (state2, idx2) <- zipped if idx1 <= idx2
+            (state3, idx3) <- zipped if idx2 <= idx3
+          } {
+            state1.compare(state2) shouldBe (true)
+            state2.compare(state3) shouldBe (true)
+            state1.compare(state3) shouldBe (true)
+          }
+        }
+      }
+    }
+
+    describe("merge method should satisfy") {
       it("associativity") {
         forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)], l3: List[(Boolean, Int)]) =>
           val s1 = createSetFromList(l1)
@@ -33,13 +84,13 @@ class PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with
         }
       }
 
-      it("should be a least upper bound operation") {
+      it("the least upper bound operation requirement") {
         forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)]) =>
           val s1 = createSetFromList(l1)
           val s2 = createSetFromList(l2)
           val merged = s1.merge(s2)
-          s1.compare(merged) should be (true)
-          s2.compare(merged) should be (true)
+          s1.compare(merged) should be(true)
+          s2.compare(merged) should be(true)
         }
       }
     }
