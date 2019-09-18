@@ -2,7 +2,7 @@ package com.challenge
 
 import java.time.{Clock, Instant}
 
-import com.challenge.LWWElementSet2.LWWRegistrySet
+import com.challenge.LWWElementSet2.TimestampGSet
 
 import scala.collection.immutable.HashMap
 
@@ -18,7 +18,7 @@ class LWWElementSetClokImpl extends LWWElementSetClock {
 
 //an element of type E put into this set be immutable
 //it should also implement a good hashcode function to increase performance
-case class LWWElementSet2[E](addSet: LWWRegistrySet[E], removeSet: LWWRegistrySet[E])(clock: LWWElementSetClock) {
+case class LWWElementSet2[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[E])(clock: LWWElementSetClock) {
 
   //objective: add an efficient implementation of LWW Set
   //remove: amortized O(1) time
@@ -79,7 +79,7 @@ case class LWWElementSet2[E](addSet: LWWRegistrySet[E], removeSet: LWWRegistrySe
 
 object LWWElementSet2 {
 
-  def empty[E](clock: LWWElementSetClock = new LWWElementSetClokImpl()): LWWElementSet2[E] = LWWElementSet2(LWWRegistrySet[E](), LWWRegistrySet[E]())(clock)
+  def empty[E](clock: LWWElementSetClock = new LWWElementSetClokImpl()): LWWElementSet2[E] = LWWElementSet2(TimestampGSet[E](), TimestampGSet[E]())(clock)
 
   def from[E](es: Seq[E], clock: LWWElementSetClock = new LWWElementSetClokImpl()): LWWElementSet2[E] = {
     es.foldRight(empty[E](clock)) {
@@ -89,11 +89,9 @@ object LWWElementSet2 {
 
   private def max(ts1: Instant, ts2: Instant): Instant = if (ts1.compareTo(ts2) <= 0) ts2 else ts1
 
-  //we could use a GSet, but for efficiency reasons, since non latest timestamps are in effect redundant,
-  //these timestamps are dropped
-  //TODO: maybe change it to TimestampGSet
-  case class LWWRegistrySet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()) {
-    def merge(that: LWWRegistrySet[E]): LWWRegistrySet[E] = {
+  //a mutated version of Growth set: only latest timestamp is kept, others are dropped for time and space efficiency
+  case class TimestampGSet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()) {
+    def merge(that: TimestampGSet[E]): TimestampGSet[E] = {
       val updated = entries.merged(that.entries) {
         case ((element, thisLastUpdated), (_, thatLastUpdated)) =>
           (element, max(thisLastUpdated, thatLastUpdated))
@@ -101,7 +99,7 @@ object LWWElementSet2 {
       copy(entries = updated)
     }
 
-    def add(element: E, timestamp: Instant): LWWRegistrySet[E] = {
+    def add(element: E, timestamp: Instant): TimestampGSet[E] = {
       val updated = entries.updatedWith(element) {
         case Some(existing) => Some(max(existing, timestamp))
         case None => Some(timestamp)
@@ -109,15 +107,13 @@ object LWWElementSet2 {
       copy(entries = updated)
     }
 
-    //if the element does not exist, returns none, otherwise returns the latest timestamp
     def latestTimestampBy(element: E): Option[Instant] = entries.get(element)
 
-    //true: this set in related to that set of Relation R, false otherwise
-    def compare(that: LWWRegistrySet[E]): Boolean = {
+    //evaluate to true if `this` set is related to `that` set of Relation R, false otherwise
+    def compare(that: TimestampGSet[E]): Boolean = {
       /*
        * denote the elements of this class as elem(A), elem(A) = keys(entries)
        * denote the associated timestamp of element e in this set A as ts(e, A)
-       * denote the max timestamp of this class is maxTs(A)
        * (1) elem(this) is a subset of elem(that)
        * (2) for all e in (intersection of elem(this) and elem(that)), ts(e, this) <= ts(e, that)
        *
