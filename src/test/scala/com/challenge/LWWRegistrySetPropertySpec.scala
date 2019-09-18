@@ -6,12 +6,10 @@ import com.challenge.LWWElementSet2.LWWRegistrySet
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import scala.collection.immutable.HashMap
-
 class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPropertyChecks {
 
-  def intToTs(i: Int) = {
-    Instant.ofEpochMilli((i + 1).toLong)
+  private def toTimestamp(i: Int) = {
+    Instant.ofEpochMilli(i.toLong)
   }
 
   describe("LWWRegistrySet") {
@@ -19,7 +17,7 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
       it("should be reflexive") {
         forAll { elems: List[Int] =>
           val set = elems.zipWithIndex.foldLeft(LWWRegistrySet()) {
-            case (accumulate, (elem, index)) => accumulate.add(elem, intToTs(index + 1))
+            case (accumulate, (elem, index)) => accumulate.add(elem, toTimestamp(index))
           }
           set.compare(set) should be(true)
         }
@@ -29,7 +27,7 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
         //TODO: maybe write a better generator ?
         forAll { elems: List[Int] =>
           val allStates = elems.zipWithIndex.scanLeft(LWWRegistrySet()) {
-            case (accumulated, (elem, i)) => accumulated.add(elem, intToTs(i))
+            case (accumulated, (elem, i)) => accumulated.add(elem, toTimestamp(i))
           }
           val zipped = allStates.zipWithIndex
           for {
@@ -47,7 +45,7 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
       it("should be transitive") {
         forAll { elems: List[Int] =>
           val allStates = elems.zipWithIndex.scanLeft(LWWRegistrySet()) {
-            case (accumulated, (elem, i)) => accumulated.add(elem, intToTs(i))
+            case (accumulated, (elem, i)) => accumulated.add(elem, toTimestamp(i))
           }
           val zipped = allStates.zipWithIndex
           for {
@@ -68,7 +66,7 @@ class LWWRegistrySetPropertySpec extends FunSpec with Matchers with ScalaCheckPr
       it("should be monotonic") {
         forAll { elems: List[Int] =>
           val allStates = elems.zipWithIndex.scanLeft(LWWRegistrySet()) {
-            case (accumulated, (elem, i)) => accumulated.add(elem, intToTs(i))
+            case (accumulated, (elem, i)) => accumulated.add(elem, toTimestamp(i))
           }
           val zipped = allStates.zipWithIndex
           for {

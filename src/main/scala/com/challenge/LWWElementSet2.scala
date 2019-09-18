@@ -83,6 +83,7 @@ object LWWElementSet2 {
 
   //we could use a GSet, but for efficiency reasons, since non latest timestamps are ineffect redundant,
   //these timestamps are dropped
+  //TODO: maybe change it to TimestampGSet
   case class LWWRegistrySet(entries: HashMap[Element, Instant] = HashMap()) {
     def merge(that: LWWRegistrySet): LWWRegistrySet = {
       val updated = entries.merged(that.entries) {
