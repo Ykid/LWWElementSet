@@ -16,25 +16,12 @@ class LWWElementSetClokImpl extends LWWElementSetClock {
   override def now(): Instant = clock.instant()
 }
 
-//an element of type E put into this set be immutable
-//it should also implement a good hashcode function to increase performance
+/*
+ * an element of type E put into this set be immutable. It should also implement a good hashcode function to increase performance.
+ * This implementation is not very functional, it is better to use IO container type if we want more functional style
+ */
 case class LWWElementSet2[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[E])(clock: LWWElementSetClock) {
-
-  //objective: add an efficient implementation of LWW Set
-  //remove: amortized O(1) time
-  //simply append the item to the end
-
-  //add: amortized O(1) time
-  //simply append the item to the end
-
-  //lookup: amortized O(1) time
-  //hash map related implementation
-
-  //merge: O(#SumOfElementsInTwoSets) time
-  //does not depends on lookup. merge the two subsets
-
-  //toSet: O(#elements in addSet) time
-
+  //remove: O(1) time
   //no need to throw exceptions if the element is not in the set
   def remove(ele: E): LWWElementSet2[E] = {
     if (lookup(ele)) {
@@ -44,8 +31,10 @@ case class LWWElementSet2[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[
     }
   }
 
+  //add: O(1) time
   def add(ele: E): LWWElementSet2[E] = copy(addSet = addSet.add(ele, clock.now()))(clock)
 
+  //lookup: amortized O(1) time
   def lookup(ele: E): Boolean = {
     addSet.latestTimestampBy(ele)
       .exists { addTs =>
@@ -56,8 +45,10 @@ case class LWWElementSet2[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[
       }
   }
 
+  //merge: O(#SumOfElementsInTwoSets) time
   def merge(other: LWWElementSet2[E]): LWWElementSet2[E] = copy(addSet.merge(other.addSet), removeSet.merge(other.removeSet))(clock)
 
+  //toSet: O(#elements in addSet) time
   def toSet: Set[E] = addSet.entries.foldLeft(List[E]()) {
     case (acc, (ele, latestAddTs)) => {
       removeSet.latestTimestampBy(ele) match {
@@ -67,9 +58,6 @@ case class LWWElementSet2[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[
       }
     }
   }.toSet
-
-  //don't think too much, treat it as a set
-  //can use merge to define it x <= x.merge(y), y <= y.merge(x), x.merge(y) = y.merge(x)
 
   def compare(that: LWWElementSet2[E]): Boolean = {
     addSet.compare(that.addSet) && removeSet.compare(that.removeSet)
