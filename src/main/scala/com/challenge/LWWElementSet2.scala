@@ -119,8 +119,11 @@ object LWWElementSet2 {
       val thatElems = that.entries.keySet
       val cond1 = thisElems.subsetOf(thatElems)
 
-      lazy val cond2 = thisElems.intersect(thatElems).forall { commonElem =>
-        (entries(commonElem) compareTo that.entries(commonElem)) <= 0
+      lazy val cond2 = thisElems.forall { elem =>
+        that.entries.get(elem) match {
+          case Some(ts) => entries(elem).compareTo(ts) <= 0
+          case None => true
+        }
       }
       cond1 && cond2
     }
