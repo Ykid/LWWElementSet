@@ -6,7 +6,17 @@ import com.challenge.LWWElementSet2.LWWRegistrySet
 
 import scala.collection.immutable.HashMap
 
-case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: LWWRegistrySet = LWWRegistrySet())(clock: Clock = Clock.systemUTC()) {
+trait LWWElementSetClock {
+  def now(): Instant
+}
+
+class LWWElementSetClokImpl extends LWWElementSetClock {
+  val clock: Clock = Clock.systemUTC()
+
+  override def now(): Instant = clock.instant()
+}
+
+case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: LWWRegistrySet = LWWRegistrySet())(clock: LWWElementSetClock = new LWWElementSetClokImpl() ) {
 
   //objective: add an efficient implementation of LWW Set
   //remove: amortized O(1) time
@@ -26,13 +36,13 @@ case class LWWElementSet2(addSet: LWWRegistrySet = LWWRegistrySet(), removeSet: 
   //no need to throw exceptions if the element is not in the set
   def remove(ele: Int): LWWElementSet2 = {
     if (lookup(ele)) {
-      copy(removeSet = removeSet.add(ele, clock.instant()))(clock)
+      copy(removeSet = removeSet.add(ele, clock.now()))(clock)
     } else {
       this
     }
   }
 
-  def add(ele: Int): LWWElementSet2 = copy(addSet = addSet.add(ele, clock.instant()))(clock)
+  def add(ele: Int): LWWElementSet2 = copy(addSet = addSet.add(ele, clock.now()))(clock)
 
   def lookup(ele: Int): Boolean = {
     addSet.latestTimestampBy(ele)
