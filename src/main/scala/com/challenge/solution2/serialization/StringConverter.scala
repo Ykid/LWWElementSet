@@ -4,7 +4,7 @@ import com.google.protobuf.any
 import com.google.protobuf.any.{Any => ProtoAny}
 import com.google.protobuf.wrappers.StringValue
 
-class StringConverter extends CRDTSerdes[String] {
+class StringConverter() extends CRDTSerdes[String] {
 
   import StringConverter.url
 

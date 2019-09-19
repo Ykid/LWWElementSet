@@ -3,6 +3,10 @@ package com.challenge.solution2
 import java.time.Instant
 
 import com.challenge.solution2.LWWElementSet2.{from, empty => emptySet}
+import com.challenge.solution2.proto.lwwelementset.TimestampGSet.Entry
+import com.challenge.solution2.proto.lwwelementset.{LWWElementSet => LWWElementSetProto, TimestampGSet => TimestampGSetProto}
+import com.challenge.solution2.serialization.SerializationException
+import com.google.protobuf.timestamp.Timestamp
 import org.scalatest.{FunSpec, Matchers}
 
 class LWWElementSet2UnitSpec extends FunSpec with Matchers with TestUtil {
@@ -114,5 +118,35 @@ class LWWElementSet2UnitSpec extends FunSpec with Matchers with TestUtil {
         }
       }
     }
+  }
+
+  describe("serialization and deserialization") {
+    import com.challenge.solution2.serialization.IntConverter._
+
+    it("should report error if the proto file is invalid") {
+      intercept[SerializationException] {
+        LWWElementSet2.deserialize[Int](LWWElementSetProto(None, Some(TimestampGSetProto()))).get
+      }
+
+      intercept[SerializationException] {
+        LWWElementSet2.deserialize[Int](LWWElementSetProto(Some(TimestampGSetProto()), None)).get
+      }
+
+      intercept[SerializationException] {
+        LWWElementSet2.deserialize[Int](createProtoWithElementRemoveBeforeAdd).get
+      }
+    }
+  }
+
+  private def createProtoWithElementRemoveBeforeAdd: LWWElementSetProto = {
+    import com.challenge.solution2.serialization.IntConverter._
+    val intProto = defaultCoverter.serialize(1)
+    val nonEmptyRemoveSet = TimestampGSetProto(
+      Seq(Entry(Some(intProto), Some(Timestamp(1L, 0))))
+    )
+    LWWElementSetProto(
+      Some(TimestampGSetProto()),
+      Some(nonEmptyRemoveSet)
+    )
   }
 }

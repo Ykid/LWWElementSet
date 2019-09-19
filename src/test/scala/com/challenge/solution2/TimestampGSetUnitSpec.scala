@@ -4,7 +4,7 @@ import java.time.Instant
 
 import org.scalatest.{FunSpec, Matchers}
 
-class TimestampGetUnitSpec extends FunSpec with Matchers with TestUtil {
+class TimestampGSetUnitSpec extends FunSpec with Matchers with TestUtil {
 
   describe("sanity checks") {
     it("should try to prevent null values") {
@@ -29,5 +29,4 @@ class TimestampGetUnitSpec extends FunSpec with Matchers with TestUtil {
       }
     }
   }
-
 }

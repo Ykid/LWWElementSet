@@ -3,7 +3,7 @@ package com.challenge.solution2.serialization
 import com.google.protobuf.any.{Any => ProtoAny}
 import com.google.protobuf.wrappers.Int32Value
 
-class IntConverter extends CRDTSerdes[Int] {
+class IntConverter() extends CRDTSerdes[Int] {
 
   import IntConverter._
 
