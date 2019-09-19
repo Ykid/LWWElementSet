@@ -151,19 +151,7 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
         deserialized should ===(s1)
       }
     }
-
-    it("use String as element type: should serialize to protobuf and deserialize back to the same object") {
-      import com.challenge.solution.serialization.StringConverter.defaultCoverter
-      forAll { (l1: List[String]) =>
-        val s1: TimestampGSet[String] = createSetFromList(l1)
-        val serialized = TimestampGSet.serialize(s1)
-        val deserialized: TimestampGSet[String] = TimestampGSet.deserialize[String](serialized).get
-
-        deserialized should ===(s1)
-      }
-    }
   }
-
 
   private def createSetFromList[T](l: List[T]): TimestampGSet[T] = {
     l.zipWithIndex.foldLeft(TimestampGSet[T]()) {
