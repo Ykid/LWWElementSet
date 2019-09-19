@@ -6,7 +6,7 @@ import org.scalatest.Matchers
 
 trait TestUtil {
   this: Matchers =>
-  def shouldBeIllegal(block: => Unit) {
+  def shouldBeIllegal(block: => Unit): Unit = {
     intercept[IllegalArgumentException](block)
   }
 
