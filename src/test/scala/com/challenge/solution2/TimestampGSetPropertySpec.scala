@@ -1,7 +1,5 @@
 package com.challenge.solution2
 
-import java.time.Instant
-
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
@@ -142,8 +140,33 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
     }
   }
 
-  private def createSetFromList(l: List[Int]): TimestampGSet[Int] = {
-    l.zipWithIndex.foldLeft(TimestampGSet[Int]()) {
+  describe("serialization and deserialization") {
+    it("use integer as element type: should serialize to protobuf and deserialize back to the same object") {
+      import IntConverter.defaultCoverter
+      forAll { (l1: List[Int]) =>
+        val s1: TimestampGSet[Int] = createSetFromList(l1)
+        val serialized = TimestampGSet.serialize(s1)
+        val deserialized: TimestampGSet[Int] = TimestampGSet.deserialize[Int](serialized).get
+
+        deserialized should ===(s1)
+      }
+    }
+
+    it("use String as element type: should serialize to protobuf and deserialize back to the same object") {
+      import StringConverter.defaultCoverter
+      forAll { (l1: List[String]) =>
+        val s1: TimestampGSet[String] = createSetFromList(l1)
+        val serialized = TimestampGSet.serialize(s1)
+        val deserialized: TimestampGSet[String] = TimestampGSet.deserialize[String](serialized).get
+
+        deserialized should ===(s1)
+      }
+    }
+  }
+
+
+  private def createSetFromList[T](l: List[T]): TimestampGSet[T] = {
+    l.zipWithIndex.foldLeft(TimestampGSet[T]()) {
       case (accumulate, (elem, index)) => accumulate.add(elem, toInstant(index))
     }
   }

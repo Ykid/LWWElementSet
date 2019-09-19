@@ -8,6 +8,18 @@ val scalaTestVersion = "3.0.8"
 
 scalacOptions := Seq("-deprecation")
 
-libraryDependencies += "org.scalactic" %% "scalactic" % scalaTestVersion
-libraryDependencies += "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
-libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
+val compiledProtoPath = "src/main/scala-protos/scala"
+unmanagedSourceDirectories in Compile += baseDirectory.value / compiledProtoPath
+
+
+PB.targets in Compile := Seq(
+  scalapb.gen(lenses = false) -> baseDirectory.value / compiledProtoPath
+)
+
+libraryDependencies ++= Seq(
+  "org.scalactic" %% "scalactic" % scalaTestVersion,
+  "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
+  "org.scalacheck" %% "scalacheck" % "1.14.0" % "test",
+  "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
+)
+

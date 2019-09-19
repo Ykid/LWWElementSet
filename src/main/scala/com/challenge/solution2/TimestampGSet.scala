@@ -3,6 +3,10 @@ package com.challenge.solution2
 import java.time.Instant
 
 import scala.collection.immutable.HashMap
+import com.challenge.solution2.proto.lwwelementset.{TimestampGSet => TimestampGSetProto}
+import com.google.protobuf.timestamp.Timestamp
+
+import scala.util.Try
 
 /*
  * a mutated version of Growth set
@@ -60,4 +64,28 @@ case class TimestampGSet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()
   }
 
   private def max(ts1: Instant, ts2: Instant): Instant = if (ts1.compareTo(ts2) <= 0) ts2 else ts1
+}
+
+object TimestampGSet {
+
+  import TimestampGSetProto._
+
+  def serialize[E](set: TimestampGSet[E])(implicit converter: CRDTSerdes[E]): TimestampGSetProto = {
+    val protoEntries = set.entries.toSeq.map {
+      case (k, v) => Entry(Some(converter.serialize(k)), Some(Timestamp(v.getEpochSecond, v.getNano)))
+    }
+    TimestampGSetProto(protoEntries)
+  }
+
+  def deserialize[E](proto: TimestampGSetProto)(implicit converter: CRDTSerdes[E]): Try[TimestampGSet[E]] = {
+    Try {
+      val tuples: Seq[(E, Instant)] = proto
+        .entries
+        .flatMap {
+          case Entry(Some(k), Some(v)) => Some((converter.deserialize(k), Instant.ofEpochSecond(v.seconds, v.nanos)))
+          case _ => None
+        }
+      TimestampGSet(HashMap.from(tuples))
+    }
+  }
 }
