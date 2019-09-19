@@ -6,7 +6,7 @@ import com.challenge.solution2.serialization.{CRDTSerdes, SerializationException
 import scala.util.Try
 
 /*
- * an element of type E put into this set be immutable. It should also implement a good hashcode function to increase performance.
+ * An element of type E put into this set be immutable. It should also implement a good hashcode function to increase performance.
  * This implementation is not very functional, it is better to use IO container type if we want more functional style
  */
 case class LWWElementSet2[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[E])(clock: LWWElementSetClock) {
@@ -14,8 +14,6 @@ case class LWWElementSet2[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[
   require(removeSet != null)
   require(clock != null)
 
-  //remove: O(1) time
-  //no need to throw exceptions if the element is not in the set
   def remove(ele: E): LWWElementSet2[E] = {
     require(ele != null)
     if (lookup(ele)) {
@@ -25,13 +23,11 @@ case class LWWElementSet2[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[
     }
   }
 
-  //add: O(1) time
   def add(ele: E): LWWElementSet2[E] = {
     require(ele != null)
     copy(addSet = addSet.add(ele, clock.now()))(clock)
   }
 
-  //lookup: amortized O(1) time
   def lookup(ele: E): Boolean = {
     addSet.latestTimestampBy(ele)
       .exists { addTs =>
@@ -42,13 +38,11 @@ case class LWWElementSet2[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[
       }
   }
 
-  //merge: O(#SumOfElementsInTwoSets) time
   def merge(that: LWWElementSet2[E]): LWWElementSet2[E] = {
     require(that != null)
     copy(addSet.merge(that.addSet), removeSet.merge(that.removeSet))(clock)
   }
 
-  //toSet: O(#elements in addSet) time
   def toSet: Set[E] = addSet.entries.foldLeft(List[E]()) {
     case (acc, (ele, latestAddTs)) => {
       removeSet.latestTimestampBy(ele) match {
@@ -74,6 +68,7 @@ object LWWElementSet2 {
     }
   }
 
+  //for data transmission between nodes
   def serialize[E](set: LWWElementSet2[E])(implicit converter: CRDTSerdes[E]): LWWElementSetProto = {
     LWWElementSetProto(Some(TimestampGSet.serialize(set.addSet)), Some(TimestampGSet.serialize(set.removeSet)))
   }
@@ -84,9 +79,6 @@ object LWWElementSet2 {
         case LWWElementSetProto(Some(protoAddSet), Some(protoRemoveSet)) =>
           val addSet = TimestampGSet.deserialize(protoAddSet).get
           val removeSet = TimestampGSet.deserialize(protoRemoveSet).get
-          //newly add, in addset not in remove set
-          //add -> remove, in both addset and remove set, remove set bigger time stamp
-          //add -> remove -> add , in both addset and remove set, add set bigger time stamp
           val valid = removeSet.entries.forall {
             case (e, _) => addSet.latestTimestampBy(e).nonEmpty
           }

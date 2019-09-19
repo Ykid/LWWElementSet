@@ -10,9 +10,9 @@ import com.google.protobuf.timestamp.Timestamp
 import scala.util.Try
 
 /*
- * a mutated version of Growth set
+ * A mutated version of Growth set.
  * - only latest timestamp is kept, others are dropped for time and space efficiency
- * - element should be added with a timestamp
+ * - an element is be added with a timestamp
  */
 case class TimestampGSet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()) {
   require(entries != null)
