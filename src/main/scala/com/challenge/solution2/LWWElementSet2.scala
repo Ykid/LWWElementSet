@@ -1,5 +1,9 @@
 package com.challenge.solution2
 
+import com.challenge.solution2.proto.lwwelementset.{LWWElementSet => LWWElementSetProto}
+
+import scala.util.Try
+
 /*
  * an element of type E put into this set be immutable. It should also implement a good hashcode function to increase performance.
  * This implementation is not very functional, it is better to use IO container type if we want more functional style
@@ -66,6 +70,29 @@ object LWWElementSet2 {
   def from[E](es: Seq[E], clock: LWWElementSetClock = new LWWElementSetClockImpl()): LWWElementSet2[E] = {
     es.foldRight(empty[E](clock)) {
       case (ele, accumulate) => accumulate.add(ele)
+    }
+  }
+
+  def serialize[E](set: LWWElementSet2[E])(implicit converter: CRDTSerdes[E]): LWWElementSetProto = {
+    LWWElementSetProto(Some(TimestampGSet.serialize(set.addSet)), Some(TimestampGSet.serialize(set.removeSet)))
+  }
+
+  def deserialize[E](proto: LWWElementSetProto)(implicit converter: CRDTSerdes[E]): Try[LWWElementSet2[E]] = {
+    Try {
+      proto match {
+        case LWWElementSetProto(Some(protoAddSet), Some(protoRemoveSet)) =>
+          val addSet = TimestampGSet.deserialize(protoAddSet).get
+          val removeSet = TimestampGSet.deserialize(protoRemoveSet).get
+          //newly add, in addset not in remove set
+          //add -> remove, in both addset and remove set, remove set bigger time stamp
+          //add -> remove -> add , in both addset and remove set, add set bigger time stamp
+          val valid = removeSet.entries.forall {
+            case (e, _) => addSet.latestTimestampBy(e).nonEmpty
+          }
+          if (!valid) throw new Exception("invalid format: some elements are in removeset but not addset, impossible")
+          LWWElementSet2(addSet, removeSet)(new LWWElementSetClockImpl())
+        case _ => throw new Exception("invalid format: not both addSet or removeSet are defined")
+      }
     }
   }
 }

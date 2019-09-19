@@ -159,6 +159,19 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with ScalaCheckPr
         }
       }
     }
+
+    describe("serialization and deserialization") {
+      it("use integer as element type: should serialize to protobuf and deserialize back to the same object") {
+        import IntConverter.defaultCoverter
+        forAll { (l1: List[(Boolean, Int)]) =>
+          val s1: LWWElementSet2[Int] = createSetFromList(l1)
+          val serialized = LWWElementSet2.serialize(s1)
+          val deserialized: LWWElementSet2[Int] = LWWElementSet2.deserialize[Int](serialized).get
+
+          deserialized should ===(s1)
+        }
+      }
+    }
   }
 
 
