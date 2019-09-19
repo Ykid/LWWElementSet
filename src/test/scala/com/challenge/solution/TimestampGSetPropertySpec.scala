@@ -63,9 +63,9 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
             }
             val zipped = allStates.zipWithIndex
             for {
-              (state1, idx1) <- zipped if idx1 < (zipped.length - 1)
+              (state1, idx1) <- zipped
+              (state2, idx2) <- zipped if idx1 < idx2
             } {
-              val (state2, _) = zipped(idx1 + 1)
               state1.compare(state2) shouldBe (true)
               state2.compare(state1) shouldBe (false)
             }
@@ -112,12 +112,11 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
   }
 
   describe("its add operation") {
-    it("should agree with a set") {
+    it("should agree with a set for non null elements") {
       forAll { operations: List[Int] =>
         val (reference, mine) = operations.zipWithIndex.foldRight((Set[Int](), TimestampGSet[Int]())) {
-          case ((ele, idx), (referenceImpl, myImpl)) => {
+          case ((ele, idx), (referenceImpl, myImpl)) =>
             (referenceImpl + ele, myImpl.add(ele, toInstant(idx)))
-          }
         }
         reference should ===(mine.toSet)
       }
@@ -143,7 +142,7 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
   describe("serialization and deserialization") {
     it("use integer as element type: should serialize to protobuf and deserialize back to the same object") {
       import com.challenge.solution.serialization.IntConverter.defaultCoverter
-      forAll { (l1: List[Int]) =>
+      forAll { l1: List[Int] =>
         val s1: TimestampGSet[Int] = createSetFromList(l1)
         val serialized = TimestampGSet.serialize(s1)
         val deserialized: TimestampGSet[Int] = TimestampGSet.deserialize[Int](serialized).get

@@ -13,14 +13,14 @@ class LWWElementSetUnitSpec extends FunSpec with Matchers with TestUtil {
 
   describe("A LWWElementSet") {
     describe("query functionality") {
-      it("should report true if the element in question in the set") {
+      it("should report true if the element in question is in the set") {
         val set = emptySet[Int]()
-        set.add(1).lookup(1) should be(true)
+        set.add(1).query(1) should be(true)
       }
 
-      it("should report false if the element in question in the set") {
+      it("should report false if the element in question is not in the set") {
         val set = emptySet[Int]()
-        set.lookup(1) should be(false)
+        set.query(1) should be(false)
       }
     }
 
@@ -30,7 +30,7 @@ class LWWElementSetUnitSpec extends FunSpec with Matchers with TestUtil {
         set.add(1).toSet should ===(Set(1))
       }
 
-      it("should add duplicate element only once") {
+      it("should add duplicate elements only once") {
         val set = emptySet[Int]()
         set.add(1).add(1).toSet should ===(Set(1))
       }
@@ -133,19 +133,20 @@ class LWWElementSetUnitSpec extends FunSpec with Matchers with TestUtil {
       }
 
       intercept[SerializationException] {
-        LWWElementSet.deserialize[Int](createProtoWithElementRemoveBeforeAdd).get
+        LWWElementSet.deserialize[Int](createProtoWithElementRemovedBeforeAdd).get
       }
     }
   }
 
-  private def createProtoWithElementRemoveBeforeAdd: LWWElementSetProto = {
+  private def createProtoWithElementRemovedBeforeAdd: LWWElementSetProto = {
     import com.challenge.solution.serialization.IntConverter._
     val intProto = defaultCoverter.serialize(1)
+    val emptyAddSet = TimestampGSetProto()
     val nonEmptyRemoveSet = TimestampGSetProto(
       Seq(Entry(Some(intProto), Some(Timestamp(1L, 0))))
     )
     LWWElementSetProto(
-      Some(TimestampGSetProto()),
+      Some(emptyAddSet),
       Some(nonEmptyRemoveSet)
     )
   }

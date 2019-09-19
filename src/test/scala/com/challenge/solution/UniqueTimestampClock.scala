@@ -4,11 +4,11 @@ import java.time.Instant
 
 //not thread safe, only appropriate for single thread testing
 class UniqueTimestampClock() extends LWWElementSetClock {
-    var counter: Long = 1
+  var counter: Long = 1
 
-    override def now(): Instant = {
-      val result = Instant.ofEpochMilli(counter)
-      counter = counter + 1
-      result
-    }
+  override def now(): Instant = {
+    val result = Instant.ofEpochMilli(counter)
+    counter = counter + 1
+    result
   }
+}

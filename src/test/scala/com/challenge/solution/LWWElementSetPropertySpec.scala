@@ -47,10 +47,10 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
             s1.compare(s12) should be(true)
             s2.compare(s12) should be(true)
 
-            s12.compare(s123) should be (true)
+            s12.compare(s123) should be(true)
 
-            s1.compare(s123) should be (true)
-            s2.compare(s123) should be (true)
+            s1.compare(s123) should be(true)
+            s2.compare(s123) should be(true)
           }
         }
       }
@@ -63,7 +63,7 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
                 val updated = if (isAdd) last.add(ele) else last.remove(ele)
                 last.compare(updated) should be(true)
                 //in case the element to be removed is not in the set
-                if (last.lookup(ele)) {
+                if (last.query(ele)) {
                   updated.compare(last) should be(false)
                 }
                 updated
@@ -143,6 +143,25 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
       }
     }
 
+    describe("query operation") {
+      it("should be consistent with add and remove operation") {
+        forAll { operations: List[(Boolean, Int)] =>
+          operations.foldRight(emptySet[Int](new UniqueTimestampClock())) {
+            case ((isAdd, ele), myImpl) =>
+              if (isAdd) {
+                val next = myImpl.add(ele)
+                next.query(ele) should be(true)
+                next
+              } else {
+                val next = myImpl.remove(ele)
+                next.query(ele) should be(false)
+                next
+              }
+          }
+        }
+      }
+    }
+
     describe("compare operation") {
       it("should agree with merge operation") {
         //For a join-semilattice, the order is induced by setting x ≤ y whenever x ∨ y = y.
@@ -173,7 +192,6 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
       }
     }
   }
-
 
 
   private def createSetFromList(l: List[(Boolean, Int)]): LWWElementSet[Int] = {

@@ -16,7 +16,7 @@ case class LWWElementSet[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[E
 
   def remove(ele: E): LWWElementSet[E] = {
     require(ele != null)
-    if (lookup(ele)) {
+    if (query(ele)) {
       copy(removeSet = removeSet.add(ele, clock.now()))(clock)
     } else {
       this
@@ -28,7 +28,7 @@ case class LWWElementSet[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[E
     copy(addSet = addSet.add(ele, clock.now()))(clock)
   }
 
-  def lookup(ele: E): Boolean =
+  def query(ele: E): Boolean =
     addSet
       .latestTimestampBy(ele)
       .exists { addTs =>
