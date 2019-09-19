@@ -1,5 +1,4 @@
-package com.challenge.solution2
-
+package com.challenge.solution2.serialization
 import com.google.protobuf.any.{Any => ProtoAny}
 
 trait CRDTSerdes[E] {

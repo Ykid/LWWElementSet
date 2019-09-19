@@ -1,6 +1,7 @@
 package com.challenge.solution2
 
 import com.challenge.solution2.proto.lwwelementset.{LWWElementSet => LWWElementSetProto}
+import com.challenge.solution2.serialization.{CRDTSerdes, SerializationException}
 
 import scala.util.Try
 
@@ -89,9 +90,9 @@ object LWWElementSet2 {
           val valid = removeSet.entries.forall {
             case (e, _) => addSet.latestTimestampBy(e).nonEmpty
           }
-          if (!valid) throw new Exception("invalid format: some elements are in removeset but not addset, impossible")
+          if (!valid) throw SerializationException(s"Invalid format: some elements are in removeSet but not addSet, impossible. addSet: $addSet, removeSet: $removeSet")
           LWWElementSet2(addSet, removeSet)(new LWWElementSetClockImpl())
-        case _ => throw new Exception("invalid format: not both addSet or removeSet are defined")
+        case _ => throw SerializationException(s"Invalid format: not both addSet or removeSet are defined. addSet: ${proto.toProtoString}")
       }
     }
   }

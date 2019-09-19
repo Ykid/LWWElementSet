@@ -4,6 +4,7 @@ import java.time.Instant
 
 import scala.collection.immutable.HashMap
 import com.challenge.solution2.proto.lwwelementset.{TimestampGSet => TimestampGSetProto}
+import com.challenge.solution2.serialization.CRDTSerdes
 import com.google.protobuf.timestamp.Timestamp
 
 import scala.util.Try

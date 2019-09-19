@@ -142,7 +142,7 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
 
   describe("serialization and deserialization") {
     it("use integer as element type: should serialize to protobuf and deserialize back to the same object") {
-      import IntConverter.defaultCoverter
+      import com.challenge.solution2.serialization.IntConverter.defaultCoverter
       forAll { (l1: List[Int]) =>
         val s1: TimestampGSet[Int] = createSetFromList(l1)
         val serialized = TimestampGSet.serialize(s1)
@@ -153,7 +153,7 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
     }
 
     it("use String as element type: should serialize to protobuf and deserialize back to the same object") {
-      import StringConverter.defaultCoverter
+      import com.challenge.solution2.serialization.StringConverter.defaultCoverter
       forAll { (l1: List[String]) =>
         val s1: TimestampGSet[String] = createSetFromList(l1)
         val serialized = TimestampGSet.serialize(s1)

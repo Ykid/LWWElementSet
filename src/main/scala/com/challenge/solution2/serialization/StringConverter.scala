@@ -1,18 +1,20 @@
-package com.challenge.solution2
+package com.challenge.solution2.serialization
 
-import com.challenge.solution2.IntConverter.url
 import com.google.protobuf.any
 import com.google.protobuf.any.{Any => ProtoAny}
 import com.google.protobuf.wrappers.StringValue
 
 class StringConverter extends CRDTSerdes[String] {
+
+  import StringConverter.url
+
   override def serialize(e: String)(implicit converter: CRDTSerdes[String]): any.Any = {
     val protoStr = StringValue(e)
     ProtoAny.of(url, protoStr.toByteString)
   }
 
   override def deserialize(proto: any.Any)(implicit converter: CRDTSerdes[String]): String = {
-    if (proto.typeUrl != url) throw new Exception("type url not match!")
+    if (proto.typeUrl != url) throw SerializationException(s"type url not match!, expected: $url, received ${proto.typeUrl}")
     StringValue.parseFrom(proto.value.toByteArray).value
   }
 }

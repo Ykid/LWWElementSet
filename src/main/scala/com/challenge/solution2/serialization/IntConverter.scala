@@ -1,9 +1,10 @@
-package com.challenge.solution2
+package com.challenge.solution2.serialization
 
-import com.google.protobuf.wrappers.Int32Value
 import com.google.protobuf.any.{Any => ProtoAny}
+import com.google.protobuf.wrappers.Int32Value
 
 class IntConverter extends CRDTSerdes[Int] {
+
   import IntConverter._
 
   override def serialize(e: Int)(implicit converter: CRDTSerdes[Int]): ProtoAny = {
@@ -12,7 +13,7 @@ class IntConverter extends CRDTSerdes[Int] {
   }
 
   override def deserialize(proto: ProtoAny)(implicit converter: CRDTSerdes[Int]): Int = {
-    if (proto.typeUrl != url) throw new Exception("type url not match!")
+    if (proto.typeUrl != url) throw SerializationException(s"type url not match!, expected: $url, received ${proto.typeUrl}")
     Int32Value.parseFrom(proto.value.toByteArray).value
   }
 }
