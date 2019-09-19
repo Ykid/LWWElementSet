@@ -32,7 +32,7 @@ case class TimestampGSet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()
 
     val updated = entries.updatedWith(element) {
       case Some(existing) => Some(max(existing, timestamp))
-      case None => Some(timestamp)
+      case None           => Some(timestamp)
     }
     copy(entries = updated)
   }
@@ -58,7 +58,7 @@ case class TimestampGSet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()
     lazy val cond2 = thisElems.forall { elem =>
       that.entries.get(elem) match {
         case Some(ts) => entries(elem).compareTo(ts) <= 0
-        case None => true
+        case None     => true
       }
     }
     cond1 && cond2
@@ -78,15 +78,13 @@ object TimestampGSet {
     TimestampGSetProto(protoEntries)
   }
 
-  def deserialize[E](proto: TimestampGSetProto)(implicit converter: CRDTSerdes[E]): Try[TimestampGSet[E]] = {
+  def deserialize[E](proto: TimestampGSetProto)(implicit converter: CRDTSerdes[E]): Try[TimestampGSet[E]] =
     Try {
-      val tuples: Seq[(E, Instant)] = proto
-        .entries
+      val tuples: Seq[(E, Instant)] = proto.entries
         .flatMap {
           case Entry(Some(k), Some(v)) => Some((converter.deserialize(k), Instant.ofEpochSecond(v.seconds, v.nanos)))
-          case _ => None
+          case _                       => None
         }
       TimestampGSet(HashMap.from(tuples))
     }
-  }
 }

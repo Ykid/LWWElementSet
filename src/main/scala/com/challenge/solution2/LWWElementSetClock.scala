@@ -11,4 +11,3 @@ class LWWElementSetClockImpl extends LWWElementSetClock {
 
   override def now(): Instant = clock.instant()
 }
-

@@ -13,7 +13,8 @@ class IntConverter() extends CRDTSerdes[Int] {
   }
 
   override def deserialize(proto: ProtoAny)(implicit converter: CRDTSerdes[Int]): Int = {
-    if (proto.typeUrl != url) throw SerializationException(s"type url not match!, expected: $url, received ${proto.typeUrl}")
+    if (proto.typeUrl != url)
+      throw SerializationException(s"type url not match!, expected: $url, received ${proto.typeUrl}")
     Int32Value.parseFrom(proto.value.toByteArray).value
   }
 }

@@ -14,7 +14,8 @@ class StringConverter() extends CRDTSerdes[String] {
   }
 
   override def deserialize(proto: any.Any)(implicit converter: CRDTSerdes[String]): String = {
-    if (proto.typeUrl != url) throw SerializationException(s"type url not match!, expected: $url, received ${proto.typeUrl}")
+    if (proto.typeUrl != url)
+      throw SerializationException(s"type url not match!, expected: $url, received ${proto.typeUrl}")
     StringValue.parseFrom(proto.value.toByteArray).value
   }
 }
