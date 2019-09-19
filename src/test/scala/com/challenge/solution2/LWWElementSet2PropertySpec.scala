@@ -10,96 +10,111 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with ScalaCheckPropertyChecks {
 
   describe("LWWElementSet2") {
-    describe("should satisfy partial order requirement") {
-      it("should be reflexive") {
-        forAll { l1: List[(Boolean, Int)] =>
-          val s1 = createSetFromList(l1)
-          s1.compare(s1) should be(true)
+    describe("should satisfy CvRDT requirement") {
+      describe("should satisfy partial order requirement") {
+        it("should be reflexive") {
+          forAll { l1: List[(Boolean, Int)] =>
+            val s1 = createSetFromList(l1)
+            s1.compare(s1) should be(true)
+          }
+        }
+
+        it("should be anti-symmetric") {
+          forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)]) =>
+            val s1 = createUniqueTsSetFromList(l1)
+            val s2 = createUniqueTsSetFromList(l2)
+            val s12 = s1.merge(s2)
+
+            s1.compare(s12) should be(true)
+            s2.compare(s12) should be(true)
+
+            if (s12.compare(s1)) {
+              s12 should ===(s1)
+            }
+
+            if (s12.compare(s2)) {
+              s12 should ===(s2)
+            }
+          }
+        }
+
+        it("should be transitive") {
+          forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)], l3: List[(Boolean, Int)]) =>
+            val s1 = createUniqueTsSetFromList(l1)
+            val s2 = createUniqueTsSetFromList(l2)
+            val s3 = createUniqueTsSetFromList(l3)
+
+            val s12 = s1.merge(s2)
+            val s123 = s1.merge(s2).merge(s3)
+
+            s1.compare(s12) should be(true)
+            s2.compare(s12) should be(true)
+
+            s12.compare(s123) should be (true)
+
+            s1.compare(s123) should be (true)
+            s2.compare(s123) should be (true)
+          }
         }
       }
 
-      //TODO: don't know how to generate perfect random data such that A <= B
-      it("should be anti-symmetric") {
-        //TODO: maybe write a better generator ?
-        forAll { elems: List[(Boolean, Int)] =>
-          val allStates = elems.scanLeft(emptySet[Int](new UniqueTimestampClock())) {
-            case (accumulated, (isAdd, elem)) =>
-              if (isAdd) accumulated.add(elem)
-              else accumulated.remove(elem)
-          }
-          val zipped = allStates.zipWithIndex
-          for {
-            (state1, idx1) <- zipped
-            (state2, idx2) <- zipped if idx1 <= idx2
-          } {
-            state1.compare(state2) shouldBe (true)
-            if (state2.compare(state1)) {
-              state1 should ===(state2)
+      describe("should 'monotonically increase' in state") {
+        it("should be monotonic") {
+          forAll { operations: List[(Boolean, Int)] =>
+            operations.foldRight(emptySet[Int](new UniqueTimestampClock())) {
+              case ((isAdd, ele), last) =>
+                val updated = if (isAdd) last.add(ele) else last.remove(ele)
+                last.compare(updated) should be(true)
+                //in case the element to be removed is not in the set
+                if (last.lookup(ele)) {
+                  updated.compare(last) should be(false)
+                }
+                updated
             }
           }
         }
       }
 
-      it("should be transitive") {
-        forAll { elems: List[(Boolean, Int)] =>
-          val allStates = elems.scanLeft(emptySet[Int](new UniqueTimestampClock())) {
-            case (accumulated, (isAdd, elem)) =>
-              if (isAdd) accumulated.add(elem)
-              else accumulated.remove(elem)
-          }
-          val zipped = allStates.zipWithIndex
-          for {
-            (state1, idx1) <- zipped
-            (state2, idx2) <- zipped if idx1 <= idx2
-            (state3, idx3) <- zipped if idx2 <= idx3
-          } {
-            state1.compare(state2) shouldBe (true)
-            state2.compare(state3) shouldBe (true)
-            state1.compare(state3) shouldBe (true)
+      describe("the merge function has 'least upper bound' property and it is idempotent and order-independent") {
+        it("associativity") {
+          forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)], l3: List[(Boolean, Int)]) =>
+            val s1 = createSetFromList(l1)
+            val s2 = createSetFromList(l2)
+            val s3 = createSetFromList(l3)
+            s1.merge(s2).merge(s3) should ===(s1.merge(s2.merge(s3)))
           }
         }
-      }
-    }
 
-    describe("merge method should satisfy") {
-      it("associativity") {
-        forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)], l3: List[(Boolean, Int)]) =>
-          val s1 = createSetFromList(l1)
-          val s2 = createSetFromList(l2)
-          val s3 = createSetFromList(l3)
-          s1.merge(s2).merge(s3) should ===(s1.merge(s2.merge(s3)))
+        it("idempotence") {
+          forAll { l1: List[(Boolean, Int)] =>
+            val s1 = createSetFromList(l1)
+            s1.merge(s1) should ===(s1)
+          }
         }
-      }
 
-      it("idempotence") {
-        forAll { l1: List[(Boolean, Int)] =>
-          val s1 = createSetFromList(l1)
-          s1.merge(s1) should ===(s1)
+        it("commutativity") {
+          forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)]) =>
+            val s1 = createSetFromList(l1)
+            val s2 = createSetFromList(l2)
+            s1.merge(s2) should ===(s2.merge(s1))
+          }
         }
-      }
 
-      it("commutativity") {
-        forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)]) =>
-          val s1 = createSetFromList(l1)
-          val s2 = createSetFromList(l2)
-          s1.merge(s2) should ===(s2.merge(s1))
-        }
-      }
-
-      it("the least upper bound operation requirement") {
-        forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)]) =>
-          val s1 = createSetFromList(l1)
-          val s2 = createSetFromList(l2)
-          val merged = s1.merge(s2)
-          s1.compare(merged) should be(true)
-          s2.compare(merged) should be(true)
+        it("the least upper bound operation requirement") {
+          forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)]) =>
+            val s1 = createSetFromList(l1)
+            val s2 = createSetFromList(l2)
+            val merged = s1.merge(s2)
+            s1.compare(merged) should be(true)
+            s2.compare(merged) should be(true)
+          }
         }
       }
     }
 
     //use unique timestamp clock to make sure time stamp agrees with causal order
-    describe("add and remove") {
-      it("agree with a set if add and remove the same element randomly") {
+    describe("its add and remove operations") {
+      it("should agree with a set if add and remove the same element randomly") {
         val ele = 1
         forAll { operations: List[Boolean] =>
           val (reference, mine) = operations.foldRight((Set[Int](), emptySet[Int](new UniqueTimestampClock()))) {
@@ -115,7 +130,7 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurem
         }
       }
 
-      it("agree with a set if add and remove (possibly) different element randomly") {
+      it("should agree with a set if add and remove (possibly) different element randomly") {
         forAll { operations: List[(Boolean, Int)] =>
           val (reference, mine) = operations.foldRight((Set[Int](), emptySet[Int](new UniqueTimestampClock()))) {
             case ((isAdd, ele), (referenceImpl, myImpl)) => {
@@ -129,26 +144,36 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurem
           reference should ===(mine.toSet)
         }
       }
+    }
 
-      it("should be monotonic") {
-        forAll { operations: List[(Boolean, Int)] =>
-          operations.foldRight(emptySet[Int](new UniqueTimestampClock())) {
-            case ((isAdd, ele), last) =>
-              val updated = if (isAdd) last.add(ele) else last.remove(ele)
-              last.compare(updated) should be(true)
-              //in case the element to be removed is not in the set
-              if (last.lookup(ele)) {
-                updated.compare(last) should be(false)
-              }
-              updated
-          }
+    describe("compare operation") {
+      it("should agree with merge operation") {
+        //For a join-semilattice, the order is induced by setting x ≤ y whenever x ∨ y = y.
+        forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)]) =>
+          val s1 = createUniqueTsSetFromList(l1)
+          val s2 = createUniqueTsSetFromList(l2)
+          val s3 = s1.merge(s2)
+
+          s1.merge(s3) should ===(s3)
+          s2.merge(s3) should ===(s3)
+
+          s1.compare(s3) should be(true)
+          s2.compare(s3) should be(true)
         }
       }
     }
   }
 
+
+
   private def createSetFromList(l: List[(Boolean, Int)]): LWWElementSet2[Int] = {
     l.foldLeft(emptySet[Int]()) {
+      case (set, (shouldAdd, ele)) => if (shouldAdd) set.add(ele) else set.remove(ele)
+    }
+  }
+
+  private def createUniqueTsSetFromList(l: List[(Boolean, Int)]): LWWElementSet2[Int] = {
+    l.foldLeft(emptySet[Int](new UniqueTimestampClock())) {
       case (set, (shouldAdd, ele)) => if (shouldAdd) set.add(ele) else set.remove(ele)
     }
   }
