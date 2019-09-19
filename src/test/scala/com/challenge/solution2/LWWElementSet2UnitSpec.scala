@@ -6,7 +6,7 @@ import com.challenge.TimeMeasurementHelper
 import com.challenge.solution2.LWWElementSet2.{from, empty => emptySet}
 import org.scalatest.{FunSpec, Matchers}
 
-class LWWElementSet2UnitSpec extends FunSpec with Matchers with TimeMeasurementHelper {
+class LWWElementSet2UnitSpec extends FunSpec with Matchers with TestUtil {
 
   describe("A LWWElementSet") {
     describe("query functionality") {
@@ -81,6 +81,38 @@ class LWWElementSet2UnitSpec extends FunSpec with Matchers with TimeMeasurementH
         val fixedTimestampClock: LWWElementSetClock = () => Instant.ofEpochMilli(10000)
         val set = emptySet[Int](fixedTimestampClock)
         set.add(1).remove(1).toSet should ===(Set())
+      }
+    }
+
+    describe("sanity checks") {
+      it("should try to prevent null values") {
+        shouldBeIllegal {
+          LWWElementSet2(null, TimestampGSet[String]())(new LWWElementSetClockImpl)
+        }
+
+        shouldBeIllegal {
+          LWWElementSet2(TimestampGSet[String](), null)(new LWWElementSetClockImpl)
+        }
+
+        shouldBeIllegal {
+          LWWElementSet2(TimestampGSet[String](), TimestampGSet[String]())(null)
+        }
+
+        shouldBeIllegal {
+          emptySet[String]().add(null)
+        }
+
+        shouldBeIllegal {
+          emptySet[String]().remove(null)
+        }
+
+        shouldBeIllegal {
+          emptySet[String]().compare(null)
+        }
+
+        shouldBeIllegal {
+          emptySet[String]().merge(null)
+        }
       }
     }
   }

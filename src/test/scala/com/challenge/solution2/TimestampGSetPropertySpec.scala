@@ -5,7 +5,7 @@ import java.time.Instant
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPropertyChecks {
+class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPropertyChecks with TestUtil {
 
 
   describe("TimestampGSet") {
@@ -61,7 +61,7 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
         it("should be monotonic") {
           forAll { elems: List[Int] =>
             val allStates = elems.zipWithIndex.scanLeft(TimestampGSet[Int]()) {
-              case (accumulated, (elem, i)) => accumulated.add(elem, toTimestamp(i))
+              case (accumulated, (elem, i)) => accumulated.add(elem, toInstant(i))
             }
             val zipped = allStates.zipWithIndex
             for {
@@ -118,7 +118,7 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
       forAll { operations: List[Int] =>
         val (reference, mine) = operations.zipWithIndex.foldRight((Set[Int](), TimestampGSet[Int]())) {
           case ((ele, idx), (referenceImpl, myImpl)) => {
-            (referenceImpl + ele, myImpl.add(ele, toTimestamp(idx)))
+            (referenceImpl + ele, myImpl.add(ele, toInstant(idx)))
           }
         }
         reference should ===(mine.toSet)
@@ -144,12 +144,8 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
 
   private def createSetFromList(l: List[Int]): TimestampGSet[Int] = {
     l.zipWithIndex.foldLeft(TimestampGSet[Int]()) {
-      case (accumulate, (elem, index)) => accumulate.add(elem, toTimestamp(index))
+      case (accumulate, (elem, index)) => accumulate.add(elem, toInstant(index))
     }
-  }
-
-  private def toTimestamp(i: Int) = {
-    Instant.ofEpochMilli(i.toLong)
   }
 
 }
