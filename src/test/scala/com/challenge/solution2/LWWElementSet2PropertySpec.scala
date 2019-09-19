@@ -1,7 +1,5 @@
 package com.challenge.solution2
 
-import java.time.Instant
-
 import com.challenge.TimeMeasurementHelper
 import com.challenge.solution2.LWWElementSet2.{empty => emptySet}
 import org.scalatest.{FunSpec, Matchers}
@@ -177,16 +175,4 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurem
       case (set, (shouldAdd, ele)) => if (shouldAdd) set.add(ele) else set.remove(ele)
     }
   }
-
-  //not thread safe, only appropriate for single thread testing
-  class UniqueTimestampClock extends LWWElementSetClock {
-    var counter: Long = 1
-
-    override def now(): Instant = {
-      val result = Instant.ofEpochMilli(counter)
-      counter = counter + 1
-      result
-    }
-  }
-
 }

@@ -6,7 +6,7 @@ import com.challenge.TimeMeasurementHelper
 import com.challenge.solution2.LWWElementSet2.{from, empty => emptySet}
 import org.scalatest.{FunSpec, Matchers}
 
-class LWWElementSet2Spec extends FunSpec with Matchers with TimeMeasurementHelper {
+class LWWElementSet2UnitSpec extends FunSpec with Matchers with TimeMeasurementHelper {
 
   describe("A LWWElementSet") {
     describe("query functionality") {
@@ -34,7 +34,7 @@ class LWWElementSet2Spec extends FunSpec with Matchers with TimeMeasurementHelpe
 
       it("should be able to add different elements") {
         val set = emptySet[Int]()
-        set.add(1).add(2).add(3).toSet should ===(Set(1, 2, 3))
+        set.add(1).add(2).toSet should ===(Set(1, 2))
       }
     }
 
@@ -64,16 +64,16 @@ class LWWElementSet2Spec extends FunSpec with Matchers with TimeMeasurementHelpe
       }
 
       it("case three: if element in set1 is deleted in the other set, the element will not shown") {
-        val set1 = from(Seq(1))
-        Thread.sleep(5)
-        val set2 = emptySet[Int]().add(1).remove(1)
+        val uniqueTimestampClock = new UniqueTimestampClock()
+        val set1 = from(Seq(1), uniqueTimestampClock)
+        val set2 = emptySet[Int](uniqueTimestampClock).add(1).remove(1)
         set1.merge(set2).toSet should ===(Set())
       }
 
       it("case four: if deleted element in set1 is added back in the other set, the element will be shown") {
-        val set1 = from(Seq(1)).remove(1)
-        Thread.sleep(5)
-        val set2 = from(Seq(1))
+        val uniqueTimestampClock = new UniqueTimestampClock()
+        val set1 = from(Seq(1), uniqueTimestampClock).remove(1)
+        val set2 = from(Seq(1), uniqueTimestampClock)
         set1.merge(set2).toSet should ===(Set(1))
       }
 
@@ -83,45 +83,5 @@ class LWWElementSet2Spec extends FunSpec with Matchers with TimeMeasurementHelpe
         set.add(1).remove(1).toSet should ===(Set())
       }
     }
-
-    describe("performance") {
-      it("add 10,000,000 elements and then lookup") {
-        val createdSet = time {
-          (1 to 1_000_000_0).foldLeft(emptySet[Int]()) {
-            case (lwwSet, ele) => lwwSet.add(ele)
-          }
-        }
-        val result = time {
-          createdSet.lookup(-1)
-        }
-        result should be(false)
-      }
-    }
-
-    describe("merge properties") {
-      it("should be idempotent") {
-        val set1 = from(Seq(1))
-        set1.merge(set1).toSet should ===(set1.toSet)
-
-        val set2 = from(Seq(1)).remove(1)
-        set2.merge(set2).toSet should ===(set2.toSet)
-      }
-
-      it("should be commutative") {
-        val set1 = from(Seq(1)).remove(1)
-        val set2 = from(Seq(2)).remove(2).add(3).add(1)
-        set1.merge(set2).toSet should ===(set2.merge(set1).toSet)
-      }
-
-      it("should be associative") {
-        val set1 = from(Seq(1)).remove(1)
-        Thread.sleep(5)
-        val set2 = from(Seq(2)).remove(2).add(3).add(1)
-        Thread.sleep(5)
-        val set3 = from(Seq(4)).remove(4).add(1).add(3).remove(3)
-        set1.merge(set2).merge(set3).toSet should ===(set1.merge(set2.merge(set3)).toSet)
-      }
-    }
-
   }
 }
