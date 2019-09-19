@@ -21,5 +21,5 @@ class IntConverter() extends CRDTSerdes[Int] {
 
 object IntConverter {
   implicit val defaultCoverter = new IntConverter()
-  val url = "type.googleapis.com/scala.Int"
+  val url = "type.googleapis.com/proto3.int32"
 }
