@@ -111,7 +111,7 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
 
     //use unique timestamp clock to make sure time stamp agrees with causal order
     describe("its add and remove operations") {
-      it("should agree with a set if add and remove the same element randomly") {
+      it("should agree with a set if add and remove the same element(non null) randomly") {
         val ele = 1
         forAll { operations: List[Boolean] =>
           val (reference, mine) = operations.foldRight((Set[Int](), emptySet[Int](new UniqueTimestampClock()))) {
@@ -127,7 +127,7 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
         }
       }
 
-      it("should agree with a set if add and remove (possibly) different element randomly") {
+      it("should agree with a set if add and remove (possibly) different element(non null) randomly") {
         forAll { operations: List[(Boolean, Int)] =>
           val (reference, mine) = operations.foldRight((Set[Int](), emptySet[Int](new UniqueTimestampClock()))) {
             case ((isAdd, ele), (referenceImpl, myImpl)) => {
