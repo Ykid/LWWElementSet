@@ -91,7 +91,7 @@ object LWWElementSet {
           LWWElementSet(addSet, removeSet)(new LWWElementSetClockImpl())
         case _ =>
           throw SerializationException(
-            s"Invalid format: not both addSet or removeSet are defined. addSet: ${proto.toProtoString}"
+            s"Invalid format: not both addSet or removeSet are defined. proto: ${proto.toProtoString}"
           )
       }
     }
