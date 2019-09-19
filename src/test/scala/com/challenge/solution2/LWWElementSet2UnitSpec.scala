@@ -2,13 +2,12 @@ package com.challenge.solution2
 
 import java.time.Instant
 
-import com.challenge.TimeMeasurementHelper
 import com.challenge.solution2.LWWElementSet2.{from, empty => emptySet}
 import org.scalatest.{FunSpec, Matchers}
 
 class LWWElementSet2UnitSpec extends FunSpec with Matchers with TestUtil {
 
-  describe("A LWWElementSet") {
+  describe("A LWWElementSet2") {
     describe("query functionality") {
       it("should report true if the element in question in the set") {
         val set = emptySet[Int]()

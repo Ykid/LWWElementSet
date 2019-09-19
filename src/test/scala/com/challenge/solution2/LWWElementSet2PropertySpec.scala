@@ -1,11 +1,10 @@
 package com.challenge.solution2
 
-import com.challenge.TimeMeasurementHelper
 import com.challenge.solution2.LWWElementSet2.{empty => emptySet}
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class LWWElementSet2PropertySpec extends FunSpec with Matchers with TimeMeasurementHelper with ScalaCheckPropertyChecks {
+class LWWElementSet2PropertySpec extends FunSpec with Matchers with ScalaCheckPropertyChecks {
 
   describe("LWWElementSet2") {
     describe("should satisfy CvRDT requirement") {
