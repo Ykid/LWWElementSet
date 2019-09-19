@@ -4,7 +4,11 @@ import java.time.Instant
 
 import scala.collection.immutable.HashMap
 
-//a mutated version of Growth set: only latest timestamp is kept, others are dropped for time and space efficiency
+/*
+ * a mutated version of Growth set
+ * - only latest timestamp is kept, others are dropped for time and space efficiency
+ * - element should be added with a timestamp
+ */
 case class TimestampGSet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()) {
   def merge(that: TimestampGSet[E]): TimestampGSet[E] = {
     val updated = entries.merged(that.entries) {
@@ -24,7 +28,8 @@ case class TimestampGSet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()
 
   def latestTimestampBy(element: E): Option[Instant] = entries.get(element)
 
-  //evaluate to true if `this` set is related to `that` set of Relation R, false otherwise
+  def toSet: Set[E] = entries.keySet
+
   def compare(that: TimestampGSet[E]): Boolean = {
     /*
      * denote the elements of this class as elem(A), elem(A) = keys(entries)
