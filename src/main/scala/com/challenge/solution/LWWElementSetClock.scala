@@ -1,4 +1,4 @@
-package com.challenge.solution2
+package com.challenge.solution
 
 import java.time.{Clock, Instant}
 

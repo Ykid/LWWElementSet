@@ -1,17 +1,17 @@
-package com.challenge.solution2
+package com.challenge.solution
 
 import java.time.Instant
 
-import com.challenge.solution2.LWWElementSet2.{from, empty => emptySet}
-import com.challenge.solution2.proto.lwwelementset.TimestampGSet.Entry
-import com.challenge.solution2.proto.lwwelementset.{LWWElementSet => LWWElementSetProto, TimestampGSet => TimestampGSetProto}
-import com.challenge.solution2.serialization.SerializationException
+import com.challenge.solution.LWWElementSet.{from, empty => emptySet}
+import com.challenge.solution.proto.lwwelementset.TimestampGSet.Entry
+import com.challenge.solution.proto.lwwelementset.{LWWElementSet => LWWElementSetProto, TimestampGSet => TimestampGSetProto}
+import com.challenge.solution.serialization.SerializationException
 import com.google.protobuf.timestamp.Timestamp
 import org.scalatest.{FunSpec, Matchers}
 
-class LWWElementSet2UnitSpec extends FunSpec with Matchers with TestUtil {
+class LWWElementSetUnitSpec extends FunSpec with Matchers with TestUtil {
 
-  describe("A LWWElementSet2") {
+  describe("A LWWElementSet") {
     describe("query functionality") {
       it("should report true if the element in question in the set") {
         val set = emptySet[Int]()
@@ -90,15 +90,15 @@ class LWWElementSet2UnitSpec extends FunSpec with Matchers with TestUtil {
     describe("sanity checks") {
       it("should try to prevent null values") {
         shouldBeIllegal {
-          LWWElementSet2(null, TimestampGSet[String]())(new LWWElementSetClockImpl)
+          LWWElementSet(null, TimestampGSet[String]())(new LWWElementSetClockImpl)
         }
 
         shouldBeIllegal {
-          LWWElementSet2(TimestampGSet[String](), null)(new LWWElementSetClockImpl)
+          LWWElementSet(TimestampGSet[String](), null)(new LWWElementSetClockImpl)
         }
 
         shouldBeIllegal {
-          LWWElementSet2(TimestampGSet[String](), TimestampGSet[String]())(null)
+          LWWElementSet(TimestampGSet[String](), TimestampGSet[String]())(null)
         }
 
         shouldBeIllegal {
@@ -121,25 +121,25 @@ class LWWElementSet2UnitSpec extends FunSpec with Matchers with TestUtil {
   }
 
   describe("serialization and deserialization") {
-    import com.challenge.solution2.serialization.IntConverter._
+    import com.challenge.solution.serialization.IntConverter._
 
     it("should report error if the proto file is invalid") {
       intercept[SerializationException] {
-        LWWElementSet2.deserialize[Int](LWWElementSetProto(None, Some(TimestampGSetProto()))).get
+        LWWElementSet.deserialize[Int](LWWElementSetProto(None, Some(TimestampGSetProto()))).get
       }
 
       intercept[SerializationException] {
-        LWWElementSet2.deserialize[Int](LWWElementSetProto(Some(TimestampGSetProto()), None)).get
+        LWWElementSet.deserialize[Int](LWWElementSetProto(Some(TimestampGSetProto()), None)).get
       }
 
       intercept[SerializationException] {
-        LWWElementSet2.deserialize[Int](createProtoWithElementRemoveBeforeAdd).get
+        LWWElementSet.deserialize[Int](createProtoWithElementRemoveBeforeAdd).get
       }
     }
   }
 
   private def createProtoWithElementRemoveBeforeAdd: LWWElementSetProto = {
-    import com.challenge.solution2.serialization.IntConverter._
+    import com.challenge.solution.serialization.IntConverter._
     val intProto = defaultCoverter.serialize(1)
     val nonEmptyRemoveSet = TimestampGSetProto(
       Seq(Entry(Some(intProto), Some(Timestamp(1L, 0))))

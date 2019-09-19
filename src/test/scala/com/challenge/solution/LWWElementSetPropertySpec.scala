@@ -1,12 +1,12 @@
-package com.challenge.solution2
+package com.challenge.solution
 
-import com.challenge.solution2.LWWElementSet2.{empty => emptySet}
+import com.challenge.solution.LWWElementSet.{empty => emptySet}
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class LWWElementSet2PropertySpec extends FunSpec with Matchers with ScalaCheckPropertyChecks {
+class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPropertyChecks {
 
-  describe("LWWElementSet2") {
+  describe("LWWElementSet") {
     describe("should satisfy CvRDT requirement") {
       describe("should satisfy partial order requirement") {
         it("should be reflexive") {
@@ -162,11 +162,11 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with ScalaCheckPr
 
     describe("serialization and deserialization") {
       it("use integer as element type: should serialize to protobuf and deserialize back to the same object") {
-        import com.challenge.solution2.serialization.IntConverter.defaultCoverter
+        import com.challenge.solution.serialization.IntConverter.defaultCoverter
         forAll { (l1: List[(Boolean, Int)]) =>
-          val s1: LWWElementSet2[Int] = createSetFromList(l1)
-          val serialized = LWWElementSet2.serialize(s1)
-          val deserialized: LWWElementSet2[Int] = LWWElementSet2.deserialize[Int](serialized).get
+          val s1: LWWElementSet[Int] = createSetFromList(l1)
+          val serialized = LWWElementSet.serialize(s1)
+          val deserialized: LWWElementSet[Int] = LWWElementSet.deserialize[Int](serialized).get
 
           deserialized should ===(s1)
         }
@@ -176,13 +176,13 @@ class LWWElementSet2PropertySpec extends FunSpec with Matchers with ScalaCheckPr
 
 
 
-  private def createSetFromList(l: List[(Boolean, Int)]): LWWElementSet2[Int] = {
+  private def createSetFromList(l: List[(Boolean, Int)]): LWWElementSet[Int] = {
     l.foldLeft(emptySet[Int]()) {
       case (set, (shouldAdd, ele)) => if (shouldAdd) set.add(ele) else set.remove(ele)
     }
   }
 
-  private def createUniqueTsSetFromList(l: List[(Boolean, Int)]): LWWElementSet2[Int] = {
+  private def createUniqueTsSetFromList(l: List[(Boolean, Int)]): LWWElementSet[Int] = {
     l.foldLeft(emptySet[Int](new UniqueTimestampClock())) {
       case (set, (shouldAdd, ele)) => if (shouldAdd) set.add(ele) else set.remove(ele)
     }

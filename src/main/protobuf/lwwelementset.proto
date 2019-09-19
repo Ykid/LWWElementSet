@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package com.challenge.solution2.proto;
+package com.challenge.solution.proto;
 
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";

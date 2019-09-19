@@ -1,4 +1,4 @@
-package com.challenge.solution2.serialization
+package com.challenge.solution.serialization
 
 import com.google.protobuf.any.{Any => ProtoAny}
 
