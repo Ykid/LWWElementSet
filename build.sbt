@@ -11,12 +11,9 @@ coverageExcludedPackages := ";.*proto.*;"
 
 scalacOptions := Seq("-deprecation")
 
-val compiledProtoPath = "src/main/scala-protos/scala"
-unmanagedSourceDirectories in Compile += baseDirectory.value / compiledProtoPath
-
 
 PB.targets in Compile := Seq(
-  scalapb.gen(lenses = false) -> baseDirectory.value / compiledProtoPath
+  scalapb.gen(lenses = false) -> (sourceManaged in Compile).value
 )
 
 libraryDependencies ++= Seq(
