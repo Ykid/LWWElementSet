@@ -70,3 +70,4 @@ fabric.properties
 target
 
 .idea
+.DS_Store

@@ -6,6 +6,9 @@ scalaVersion := "2.13.0"
 
 val scalaTestVersion = "3.0.8"
 
+coverageExcludedPackages := ";.*proto.*;"
+
+
 scalacOptions := Seq("-deprecation")
 
 val compiledProtoPath = "src/main/scala-protos/scala"
