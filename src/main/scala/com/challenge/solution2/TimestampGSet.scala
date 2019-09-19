@@ -10,7 +10,10 @@ import scala.collection.immutable.HashMap
  * - element should be added with a timestamp
  */
 case class TimestampGSet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()) {
+  require(entries != null)
+
   def merge(that: TimestampGSet[E]): TimestampGSet[E] = {
+    require(that != null)
     val updated = entries.merged(that.entries) {
       case ((element, thisLastUpdated), (_, thatLastUpdated)) =>
         (element, max(thisLastUpdated, thatLastUpdated))
@@ -19,6 +22,9 @@ case class TimestampGSet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()
   }
 
   def add(element: E, timestamp: Instant): TimestampGSet[E] = {
+    require(element != null)
+    require(timestamp != null)
+
     val updated = entries.updatedWith(element) {
       case Some(existing) => Some(max(existing, timestamp))
       case None => Some(timestamp)
@@ -31,6 +37,7 @@ case class TimestampGSet[E](entries: HashMap[E, Instant] = HashMap[E, Instant]()
   def toSet: Set[E] = entries.keySet
 
   def compare(that: TimestampGSet[E]): Boolean = {
+    require(that != null)
     /*
      * denote the elements of this class as elem(A), elem(A) = keys(entries)
      * denote the associated timestamp of element e in this set A as ts(e, A)
