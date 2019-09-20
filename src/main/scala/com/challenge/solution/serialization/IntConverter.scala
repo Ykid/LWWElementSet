@@ -7,12 +7,12 @@ class IntConverter() extends CRDTSerdes[Int] {
 
   import IntConverter._
 
-  override def serialize(e: Int)(implicit converter: CRDTSerdes[Int]): ProtoAny = {
+  override def serialize(e: Int): ProtoAny = {
     val protoInt = Int32Value(e)
     ProtoAny.of(url, protoInt.toByteString)
   }
 
-  override def deserialize(proto: ProtoAny)(implicit converter: CRDTSerdes[Int]): Int = {
+  override def deserialize(proto: ProtoAny): Int = {
     if (proto.typeUrl != url)
       throw SerializationException(s"type url not match!, expected: $url, received ${proto.typeUrl}")
     Int32Value.parseFrom(proto.value.toByteArray).value
