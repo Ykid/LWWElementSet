@@ -140,7 +140,7 @@ class LWWElementSetUnitSpec extends FunSpec with Matchers with TestUtil {
 
   private def createProtoWithElementRemovedBeforeAdd: LWWElementSetProto = {
     import com.challenge.solution.serialization.IntConverter._
-    val intProto = defaultCoverter.serialize(1)
+    val intProto = defaultConverter.serialize(1)
     val emptyAddSet = TimestampGSetProto()
     val nonEmptyRemoveSet = TimestampGSetProto(
       Seq(Entry(Some(intProto), Some(Timestamp(1L, 0))))

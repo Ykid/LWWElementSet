@@ -46,13 +46,12 @@ case class LWWElementSet[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[E
   def toSet: Set[E] =
     addSet.entries
       .foldLeft(List[E]()) {
-        case (acc, (ele, latestAddTs)) => {
+        case (acc, (ele, latestAddTs)) =>
           removeSet.latestTimestampBy(ele) match {
             case Some(latestRemoveTs) if latestAddTs.compareTo(latestRemoveTs) > 0 => ele :: acc
             case Some(_)                                                           => acc
             case None                                                              => ele :: acc
           }
-        }
       }
       .toSet
 

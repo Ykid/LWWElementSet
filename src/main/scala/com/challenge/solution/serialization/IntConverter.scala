@@ -20,6 +20,6 @@ class IntConverter() extends CRDTSerdes[Int] {
 }
 
 object IntConverter {
-  implicit val defaultCoverter = new IntConverter()
+  implicit val defaultConverter: IntConverter = new IntConverter()
   val url = "type.googleapis.com/proto3.int32"
 }

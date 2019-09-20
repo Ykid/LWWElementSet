@@ -115,13 +115,12 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
         val ele = 1
         forAll { operations: List[Boolean] =>
           val (reference, mine) = operations.foldRight((Set[Int](), emptySet[Int](new UniqueTimestampClock()))) {
-            case (isAdd, (referenceImpl, myImpl)) => {
+            case (isAdd, (referenceImpl, myImpl)) =>
               if (isAdd) {
                 (referenceImpl + ele, myImpl.add(ele))
               } else {
                 (referenceImpl - ele, myImpl.remove(ele))
               }
-            }
           }
           reference should ===(mine.toSet)
         }
@@ -130,13 +129,12 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
       it("should agree with a set if add and remove (possibly) different element(non null) randomly") {
         forAll { operations: List[(Boolean, Int)] =>
           val (reference, mine) = operations.foldRight((Set[Int](), emptySet[Int](new UniqueTimestampClock()))) {
-            case ((isAdd, ele), (referenceImpl, myImpl)) => {
+            case ((isAdd, ele), (referenceImpl, myImpl)) =>
               if (isAdd) {
                 (referenceImpl + ele, myImpl.add(ele))
               } else {
                 (referenceImpl - ele, myImpl.remove(ele))
               }
-            }
           }
           reference should ===(mine.toSet)
         }
@@ -181,8 +179,8 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
 
     describe("serialization and deserialization") {
       it("use integer as element type: should serialize to protobuf and deserialize back to the same object") {
-        import com.challenge.solution.serialization.IntConverter.defaultCoverter
-        forAll { (l1: List[(Boolean, Int)]) =>
+        import com.challenge.solution.serialization.IntConverter.defaultConverter
+        forAll { l1: List[(Boolean, Int)] =>
           val s1: LWWElementSet[Int] = createSetFromList(l1)
           val serialized = LWWElementSet.serialize(s1)
           val deserialized: LWWElementSet[Int] = LWWElementSet.deserialize[Int](serialized).get
