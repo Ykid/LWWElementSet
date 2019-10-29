@@ -5,16 +5,30 @@ package com.challenge.solution.proto;
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
+// This is upposed to be shared amount different code bases
 message LWWElementSet {
     TimestampGSet addSet = 1;
     TimestampGSet removeSet = 2;
 }
+
+/*
+    1. `Any` contains an arbitrary serialized protocol buffer message along with a URL that describes the type of the serialized message.
+    2. A Timestamp represents a point in time independent of any time zone or local
+        calendar, encoded as a count of seconds and fractions of seconds at
+        nanosecond resolution.
+*/
 
 message TimestampGSet {
     message Entry {
         google.protobuf.Any element = 1;
         google.protobuf.Timestamp timestamp = 2;
     }
+    /*
+        Why not use Map?
+        1. key_type not supported. the key_type can be any integral or string type (so, any scalar type except for floating point types and bytes).
+        Note that enum is not a valid key_type
+        2. Lookup doesn't need to be done on this level.
+    */
     repeated Entry entries = 1;
 }
 

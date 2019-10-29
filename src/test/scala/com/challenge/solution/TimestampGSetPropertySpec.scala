@@ -7,6 +7,10 @@ class TimestampGSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
 
 
   describe("TimestampGSet") {
+    /*
+      G-Set is a CvRDT.
+      https://github.com/pfrazee/crdt_notes#grow-only-set-g-set
+    */
     describe("should satisfy CvRDT requirement") {
       describe("should satisfy partial order requirement") {
         it("should be reflexive") {

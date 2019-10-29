@@ -55,6 +55,7 @@ case class LWWElementSet[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[E
       }
       .toSet
 
+  //For a join-semilattice, the order is induced by setting x ≤ y whenever x ∨ y = y.
   def compare(that: LWWElementSet[E]): Boolean = {
     require(that != null)
     addSet.compare(that.addSet) && removeSet.compare(that.removeSet)
@@ -62,15 +63,18 @@ case class LWWElementSet[E](addSet: TimestampGSet[E], removeSet: TimestampGSet[E
 }
 
 object LWWElementSet {
+  //handy method, avoid weird double parenthesis
   def empty[E](clock: LWWElementSetClock = new LWWElementSetClockImpl()): LWWElementSet[E] =
     LWWElementSet(TimestampGSet[E](), TimestampGSet[E]())(clock)
 
+  //handy method, avoid weird double parenthesis
   def from[E](es: Seq[E], clock: LWWElementSetClock = new LWWElementSetClockImpl()): LWWElementSet[E] =
     es.foldRight(empty[E](clock)) {
       case (ele, accumulate) => accumulate.add(ele)
     }
 
   //for data transmission between nodes
+  //unless user calls serialize in their code, they don't need to implement the serializer and deserializer
   def serialize[E](set: LWWElementSet[E])(implicit converter: CRDTSerdes[E]): LWWElementSetProto =
     LWWElementSetProto(Some(TimestampGSet.serialize(set.addSet)), Some(TimestampGSet.serialize(set.removeSet)))
 

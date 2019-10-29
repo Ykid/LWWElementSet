@@ -80,6 +80,8 @@ class LWWElementSetUnitSpec extends FunSpec with Matchers with TestUtil {
         set1.merge(set2).toSet should ===(Set(1))
       }
 
+      // A LWW-Element-Set can be biased towards adds or removals.
+      // https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#LWW-Element-Set_(Last-Write-Wins-Element-Set)
       it("case five: if the latest add transaction has the same timestamp as the latest remove transaction, the element is treated as removed") {
         val fixedTimestampClock: LWWElementSetClock = () => Instant.ofEpochMilli(10000)
         val set = emptySet[Int](fixedTimestampClock)

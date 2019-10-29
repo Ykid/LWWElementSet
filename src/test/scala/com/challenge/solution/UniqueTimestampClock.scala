@@ -2,7 +2,10 @@ package com.challenge.solution
 
 import java.time.Instant
 
-//not thread safe, only appropriate for single thread testing
+/*
+ * not thread safe, only appropriate for single thread testing
+ * mock a total order clock
+ */
 class UniqueTimestampClock() extends LWWElementSetClock {
   var counter: Long = 1
 

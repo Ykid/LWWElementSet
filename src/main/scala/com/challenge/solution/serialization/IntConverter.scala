@@ -3,6 +3,10 @@ package com.challenge.solution.serialization
 import com.google.protobuf.any.{Any => ProtoAny}
 import com.google.protobuf.wrappers.Int32Value
 
+/*
+ * Following kafka's design
+ * Provided as an example for library user to implement other type.
+ */
 class IntConverter() extends CRDTSerdes[Int] {
 
   import IntConverter._
@@ -21,5 +25,6 @@ class IntConverter() extends CRDTSerdes[Int] {
 
 object IntConverter {
   implicit val defaultConverter: IntConverter = new IntConverter()
+  //`Any` contains an arbitrary serialized protocol buffer message along with a URL that describes the type of the serialized message.
   val url = "type.googleapis.com/proto3.int32"
 }

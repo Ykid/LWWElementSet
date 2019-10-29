@@ -7,7 +7,25 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPropertyChecks {
 
   describe("LWWElementSet") {
+    /*
+      Since it is based on LWW, this data type is convergent.
+      https://github.com/pfrazee/crdt_notes#lww-element-set
+
+
+      A state-based CRDT (CvRDT) must...
+        * Have a partial order to the values.
+        * "Monotonically increase" in state, meaning a new state only ever succeeds the current state in the value's ordering.
+        * Define a merge function ("least upper bound") which is idempotent and order-independent.
+    */
     describe("should satisfy CvRDT requirement") {
+      /*
+      * Partial order requirement
+        * a ≤ a (reflexivity: every element is related to itself).
+        * if a ≤ b and b ≤ a, then a = b (antisymmetry: two distinct elements cannot be related in both directions).
+        * if a ≤ b and b ≤ c, then a ≤ c
+        *   (transitivity: if a first element is related to a second element, and,
+        *   in turn, that element is related to a third element, then the first element is related to the third element).
+       */
       describe("should satisfy partial order requirement") {
         it("should be reflexive") {
           forAll { l1: List[(Boolean, Int)] =>
@@ -55,6 +73,12 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
         }
       }
 
+      /*
+       * 1. "Monotonically increase" in state, meaning a new state only ever succeeds the current state in the value's ordering.
+       * 2.
+       * https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#State-based_CRDTs
+       * The update function must monotonically increase the internal state, according to the same partial order rules as the semilattice.
+       */
       describe("should 'monotonically increase' in state") {
         it("should be monotonic") {
           forAll { operations: List[(Boolean, Int)] =>
@@ -72,6 +96,20 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
         }
       }
 
+      /*
+       * 1. Define a merge function ("least upper bound") which is idempotent and order-independent.
+       *
+       * 2.
+       * https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#State-based_CRDTs
+       * CvRDTs send their full local state to other replicas, where the states are merged by a function which must be
+       *  commutative,
+       *  associative, and
+       *  idempotent.
+       *
+       * The merge function provides a join for any pair of replica states, so the set of all states forms a semilattice
+       *
+       * The three properties above are actually definition of semilattice.
+       */
       describe("the merge function has 'least upper bound' property and it is idempotent and order-independent") {
         it("associativity") {
           forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)], l3: List[(Boolean, Int)]) =>
@@ -97,6 +135,7 @@ class LWWElementSetPropertySpec extends FunSpec with Matchers with ScalaCheckPro
           }
         }
 
+        //it is upper bound, but may not be the least upper bound
         it("the least upper bound operation requirement") {
           forAll { (l1: List[(Boolean, Int)], l2: List[(Boolean, Int)]) =>
             val s1 = createSetFromList(l1)
