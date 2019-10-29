@@ -2,7 +2,7 @@ name := "GoodNotesChallenge"
 
 version := "0.1"
 
-scalaVersion := "2.13.0"
+scalaVersion := "2.13.1"
 
 val scalaTestVersion = "3.0.8"
 
